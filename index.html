@@ -40,7 +40,7 @@
             </main>
     </div>
 
-    <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden items-center justify-center p-4">
+    <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[1000] hidden items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all scale-100 duration-300">
             <h3 class="text-xl font-bold mb-4 text-gray-800" id="modal-title">비밀번호 확인</h3>
             <p class="text-sm text-gray-600 mb-4" id="modal-role-info">액션을 진행하려면 비밀번호를 입력하세요.</p>
@@ -163,7 +163,7 @@
         /**
          * Global function to display a temporary message. (Localized to English)
          */
-        // [FIX 2] 메시지가 사라지지 않는 문제 해결을 위해 로직 수정
+        // [FIX 2] 메시지가 사라지지 않는 문제 해결을 위해 로직 수정 (유지)
         window.showMessage = (message, type = 'success') => {
             const box = document.getElementById('message-box');
             let bgColor = 'bg-green-500';
@@ -281,7 +281,7 @@
                     const data = docSnap.data();
                     window.state.settings.passwords = data.passwords || window.state.settings.passwords;
                     window.state.settings.consumables = data.consumables || window.state.settings.consumables;
-                    window.state.settings.supplies = data.supplies || window.state.settings.supplies;
+                    window.state.settings.supplies = data.supplies || data.supplies;
                 } else {
                     // Initialize settings if it's the first run for this user
                     // This sets initial passwords and inventory lists.
