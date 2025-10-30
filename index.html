@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITAC Cleaning Management</title>
+    <title>ITAC 청소관리</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Noto+Sans+KR:wght@100..900&display=swap');
-        body { font-family: 'Inter', sans-serif; } /* Changed font preference for English */
+        body { font-family: 'Noto Sans KR', 'Inter', sans-serif; }
         .tab-button {
             transition: all 0.2s;
         }
@@ -22,25 +22,25 @@
 <body class="bg-gray-50 min-h-screen">
     <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <header class="text-center py-6 bg-white shadow-lg rounded-xl mb-6">
-            <h1 class="text-4xl font-extrabold text-blue-700 tracking-tight">ITAC Cleaning Management</h1>
+            <h1 class="text-4xl font-extrabold text-blue-700 tracking-tight">ITAC 청소 관리 시스템</h1>
             <p id="auth-status" class="mt-2 text-sm text-gray-500">
                 <span id="loading-spinner" class="inline-block animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent mr-2"></span>
-                Initializing...
+                초기화 중...
             </p>
         </header>
 
         <nav class="flex justify-center bg-white p-2 rounded-xl shadow-md mb-6 sticky top-0 z-10">
-            <button class="tab-button active px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('home')">Home</button>
-            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('requests')">Requests</button>
-            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('reports')">Reports</button>
-            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('settings')">Settings</button>
+            <button class="tab-button active px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('home')">메인</button>
+            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('requests')">청소 요청</button>
+            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('reports')">재고 보고서</button>
+            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('settings')">설정</button>
         </nav>
 
         <main id="main-content" class="min-h-[500px]">
             </main>
     </div>
 
-    <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+    <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all scale-100 duration-300">
             <h3 class="text-xl font-bold mb-4 text-gray-800" id="modal-title">비밀번호 확인</h3>
             <p class="text-sm text-gray-600 mb-4" id="modal-role-info">액션을 진행하려면 비밀번호를 입력하세요.</p>
@@ -163,6 +163,7 @@
         /**
          * Global function to display a temporary message. (Localized to English)
          */
+        // [FIX 2] 메시지가 사라지지 않는 문제 해결을 위해 로직 수정
         window.showMessage = (message, type = 'success') => {
             const box = document.getElementById('message-box');
             let bgColor = 'bg-green-500';
@@ -176,8 +177,9 @@
                 icon = 'info';
             }
 
+            // [FIX 2] animate-in 클래스는 그대로 두어 등장 애니메이션을 시도하지만, 제거 로직은 수동으로 처리합니다.
             const messageHtml = `
-                <div class="${bgColor} text-white p-4 rounded-lg shadow-xl mb-3 flex items-center transform transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
+                <div class="${bgColor} text-white p-4 rounded-lg shadow-xl mb-3 flex items-center transform transition-all duration-300">
                     <i data-lucide="${icon}" class="w-5 h-5 mr-3"></i>
                     <span>${message}</span>
                 </div>
@@ -186,10 +188,18 @@
             lucide.createIcons();
 
             const latestMessage = box.lastElementChild;
+            
+            // 3초 후 페이드 아웃 시작
             setTimeout(() => {
-                latestMessage.classList.add('animate-out', 'fade-out', 'slide-out-to-bottom-4');
-                latestMessage.addEventListener('animationend', () => latestMessage.remove());
-            }, 3000);
+                // 페이드 아웃 효과를 위한 CSS 속성 적용
+                latestMessage.style.transition = 'opacity 0.5s ease-in-out';
+                latestMessage.style.opacity = '0';
+                
+                // 0.5초 후 완전히 제거
+                setTimeout(() => {
+                    latestMessage.remove();
+                }, 500);
+            }, 3000); // 3.0초 대기
         };
 
         /**
@@ -216,21 +226,21 @@
                     if (user) {
                         window.userId = user.uid;
                         document.getElementById('auth-status').innerHTML = `
-                            User ID: <span class="font-mono text-xs p-1 bg-gray-100 rounded">${window.userId}</span> |
-                            <span class="text-green-600">Authenticated</span>
+                            사용자 ID: <span class="font-mono text-xs p-1 bg-gray-100 rounded">${window.userId}</span> |
+                            <span class="text-green-600">인증됨</span>
                         `;
                         // Start listening to data only after successful authentication
                         window.state.isAuthReady = true;
                         window.setupDataListeners();
                         window.render();
                     } else {
-                        document.getElementById('auth-status').innerHTML = `<span class="text-red-600">Authentication Failed</span>`;
+                        document.getElementById('auth-status').innerHTML = `<span class="text-red-600">인증 실패</span>`;
                     }
                 });
 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
-                window.showMessage(`Firebase Initialization Error: ${error.message}`, 'error');
+                window.showMessage(`Firebase 초기화 오류: ${error.message}`, 'error');
             }
         };
 
@@ -358,13 +368,13 @@
             window.state.passwordCallback = callback;
             window.state.passwordRole = role;
 
-            title.textContent = `${role === 'admin' ? 'Admin' : 'Supervisor'} Password Verification`;
-            roleInfo.textContent = `This action requires ${role === 'admin' ? 'Admin' : 'Admin or Supervisor'} privileges.`;
+            title.textContent = `${role === 'admin' ? '관리자' : '수퍼바이저'} 비밀번호 확인`;
+            roleInfo.textContent = `이 작업은 ${role === 'admin' ? '관리자' : '관리자 또는 수퍼바이저'} 권한이 필요합니다.`;
             document.getElementById('password-input').value = '';
             
-            confirmBtn.textContent = 'Confirm';
-            cancelBtn.textContent = 'Cancel';
-            document.getElementById('password-input').placeholder = 'Enter Password';
+            confirmBtn.textContent = '확인';
+            cancelBtn.textContent = '취소';
+            document.getElementById('password-input').placeholder = '비밀번호 입력';
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -393,9 +403,9 @@
 
             if (success && typeof storedCallback === 'function') { // 저장된 콜백이 함수인지 확인 후 실행
                 storedCallback();
-                window.showMessage('Password Verified Successfully!', 'success');
+                window.showMessage('비밀번호가 성공적으로 확인되었습니다!', 'success');
             } else if (!success) {
-                window.showMessage('Incorrect Password.', 'error');
+                window.showMessage('비밀번호가 일치하지 않습니다.', 'error');
             }
         };
 
@@ -462,7 +472,7 @@
             const weeklyPlanRows = window.state.settings.weeklyPlan.map((plan, index) => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-3 font-medium text-gray-900">${plan.day || 'N/A'}</td>
-                    <td class="p-3 text-gray-700">${plan.task || 'No Plan'}</td>
+                    <td class="p-3 text-gray-700">${plan.task || '계획 없음'}</td>
                 </tr>
             `).join('');
 
@@ -479,9 +489,9 @@
                                     <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
                                     ${isAlert ? '<i data-lucide="bell-ring" class="w-6 h-6 text-red-500 animate-pulse"></i>' : ''}
                                 </div>
-                                <p class="text-sm text-gray-600">Current Stock: <span class="text-2xl font-extrabold ${isAlert ? 'text-red-600' : 'text-blue-600'}">${currentStock}</span> units</p>
-                                <p class="text-xs text-gray-500 mt-1">Safety Stock: ${reorderLevel}</p>
-                                ${isAlert ? '<p class="text-xs font-bold text-red-500 mt-2">🚨 Reorder Needed</p>' : ''}
+                                <p class="text-sm text-gray-600">현재 재고: <span class="text-2xl font-extrabold ${isAlert ? 'text-red-600' : 'text-blue-600'}">${currentStock}</span> 개</p>
+                                <p class="text-xs text-gray-500 mt-1">안전 재고: ${reorderLevel}</p>
+                                ${isAlert ? '<p class="text-xs font-bold text-red-500 mt-2">🚨 재고 부족 알림</p>' : ''}
                             </div>
                         `;
                     }).join('')}
@@ -492,14 +502,14 @@
                 <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
                     <h2 class="text-3xl font-bold text-blue-600 mb-4 flex items-center">
                         <i data-lucide="calendar" class="w-7 h-7 mr-2"></i>
-                        Weekly Cleaning Plan
+                        주간 청소 계획
                     </h2>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">Day/Category</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-3/4">Plan Details</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">요일/분류</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-3/4">계획 상세</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -513,25 +523,25 @@
                     <div class="bg-red-50 p-5 rounded-xl border border-red-300 shadow-md mb-6">
                         <h2 class="text-2xl font-bold text-red-600 mb-3 flex items-center">
                             <i data-lucide="alert-triangle" class="w-6 h-6 mr-2"></i>
-                            Urgent Reorder Alert
+                            긴급 재고 부족 알림
                         </h2>
                         <ul class="list-disc list-inside text-red-700 space-y-1">
                             ${reorderAlerts.map(item => `
-                                <li><strong>${item.name}</strong>: Current Stock ${window.state.inventory[item.id] || 0} (Safety Stock ${window.state.settings.safetyStock[item.id] !== undefined ? window.state.settings.safetyStock[item.id] : item.reorderLevel})</li>
+                                <li><strong>${item.name}</strong>: 현재 재고 ${window.state.inventory[item.id] || 0} (안전 재고 ${window.state.settings.safetyStock[item.id] !== undefined ? window.state.settings.safetyStock[item.id] : item.reorderLevel})</li>
                             `).join('')}
                         </ul>
                     </div>
                 ` : `<div class="bg-green-50 p-4 rounded-xl shadow-md mb-6 text-green-700 font-medium flex items-center">
                     <i data-lucide="thumbs-up" class="w-5 h-5 mr-2"></i>
-                    All inventory levels are sufficient.
+                    모든 재고 수준이 충분합니다.
                 </div>`}
 
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                        ${inventoryHtml(window.state.settings.consumables, 'Consumables Inventory Status (Click item for In/Out)')}
+                        ${inventoryHtml(window.state.settings.consumables, '소모품 재고 현황 (입/출고를 위해 항목 클릭)')}
                     </div>
                     <div class="bg-white p-6 rounded-xl shadow-lg">
-                        ${inventoryHtml(window.state.settings.supplies, 'Cleaning Supplies Inventory Status (Click item for In/Out)')}
+                        ${inventoryHtml(window.state.settings.supplies, '청소 용품 재고 현황 (입/출고를 위해 항목 클릭)')}
                     </div>
                 </div>
             `;
@@ -541,40 +551,40 @@
             const requestsHtml = window.state.requests.length > 0 ? window.state.requests.map(req => `
                 <div class="bg-white p-5 rounded-xl shadow-md border ${req.status === '완료' ? 'border-green-300' : req.status === '작업중' ? 'border-blue-300' : 'border-gray-300'}">
                     <div class="flex justify-between items-start mb-3 border-b pb-3">
-                        <span class="text-sm text-gray-500">${new Date(req.timestamp.seconds * 1000).toLocaleString('en-US')}</span>
-                        <span class="px-3 py-1 text-sm font-semibold rounded-full ${req.status === '완료' ? 'bg-green-100 text-green-800' : req.status === '작업중' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}">${req.status === '완료' ? 'Completed' : req.status === '작업중' ? 'In Progress' : 'Pending'}</span>
+                        <span class="text-sm text-gray-500">${new Date(req.timestamp.seconds * 1000).toLocaleString('ko-KR')}</span>
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full ${req.status === '완료' ? 'bg-green-100 text-green-800' : req.status === '작업중' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}">${req.status}</span>
                     </div>
-                    <p class="text-lg font-semibold mb-3">Request Message:</p>
+                    <p class="text-lg font-semibold mb-3">요청 메시지:</p>
                     <p class="text-gray-700 mb-4 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${req.requestMessage}</p>
 
                     <div class="mb-4">
-                        <p class="text-md font-medium text-gray-700 mb-2">Request Photos:</p>
+                        <p class="text-md font-medium text-gray-700 mb-2">요청 사진:</p>
                         <div class="flex flex-wrap gap-2">
-                            ${req.requestPhotos ? req.requestPhotos.map(p => `<img src="${window.toImageUrl(p)}" class="w-20 h-20 object-cover rounded-md shadow" onerror="this.src='https://placehold.co/80x80/cccccc/333333?text=Load+Error';">`).join('') : '<p class="text-sm text-gray-500">No photos</p>'}
+                            ${req.requestPhotos ? req.requestPhotos.map(p => `<img src="${window.toImageUrl(p)}" class="w-20 h-20 object-cover rounded-md shadow" onerror="this.src='https://placehold.co/80x80/cccccc/333333?text=Load+Error';">`).join('') : '<p class="text-sm text-gray-500">사진 없음</p>'}
                         </div>
                     </div>
 
                     ${req.status === '완료' ? `
                         <div class="mt-4 pt-4 border-t border-gray-100">
-                            <p class="text-lg font-semibold mb-3 text-green-600">Completion Report:</p>
-                            <p class="text-gray-700 mb-4 p-3 bg-green-50 rounded-lg whitespace-pre-wrap">${req.completionMessage || 'No Message'}</p>
-                            <p class="text-md font-medium text-gray-700 mb-2">Completion Photos:</p>
+                            <p class="text-lg font-semibold mb-3 text-green-600">완료 보고서:</p>
+                            <p class="text-gray-700 mb-4 p-3 bg-green-50 rounded-lg whitespace-pre-wrap">${req.completionMessage || '메시지 없음'}</p>
+                            <p class="text-md font-medium text-gray-700 mb-2">완료 사진:</p>
                             <div class="flex flex-wrap gap-2">
-                                ${req.completionPhotos ? req.completionPhotos.map(p => `<img src="${window.toImageUrl(p)}" class="w-20 h-20 object-cover rounded-md shadow" onerror="this.src='https://placehold.co/80x80/cccccc/333333?text=Load+Error';">`).join('') : '<p class="text-sm text-gray-500">No photos</p>'}
+                                ${req.completionPhotos ? req.completionPhotos.map(p => `<img src="${window.toImageUrl(p)}" class="w-20 h-20 object-cover rounded-md shadow" onerror="this.src='https://placehold.co/80x80/cccccc/333333?text=Load+Error';">`).join('') : '<p class="text-sm text-gray-500">사진 없음</p>'}
                             </div>
                         </div>
                     ` : ''}
 
                     <div class="mt-4 pt-4 border-t border-gray-100 flex space-x-2">
                         ${req.status === '대기' ? `
-                            <button class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition" onclick="checkPassword('supervisor', () => updateRequestStatus('${req.id}', '작업중'))">Change to In Progress</button>
+                            <button class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition" onclick="checkPassword('supervisor', () => updateRequestStatus('${req.id}', '작업중'))">작업 중으로 변경</button>
                         ` : ''}
                         ${req.status === '작업중' ? `
-                            <button class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition" onclick="openCompletionForm('${req.id}')">Complete Task</button>
+                            <button class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition" onclick="openCompletionForm('${req.id}')">작업 완료 보고</button>
                         ` : ''}
                     </div>
                 </div>
-            `).join('') : '<p class="text-center text-gray-500 text-lg py-10 bg-white rounded-xl shadow-md">No cleaning requests currently posted.</p>';
+            `).join('') : '<p class="text-center text-gray-500 text-lg py-10 bg-white rounded-xl shadow-md">현재 게시된 청소 요청이 없습니다.</p>';
 
             return `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -582,23 +592,23 @@
                         <div class="bg-white p-6 rounded-xl shadow-lg sticky top-[100px]">
                             <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
                                 <i data-lucide="plus-circle" class="w-6 h-6 mr-2"></i>
-                                New Cleaning Request (All Users)
+                                새로운 청소 요청 (전체 사용자)
                             </h2>
-                            <textarea id="request-message" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-3" placeholder="Enter detailed request message."></textarea>
+                            <textarea id="request-message" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-3" placeholder="상세 요청 메시지를 입력하세요."></textarea>
                             
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Attach Photos (Max 5, Base64 Simulation)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">사진 첨부 (최대 5개, Base64 시뮬레이션)</label>
                             <input type="file" id="request-photo-input" accept="image/*" multiple max="5" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4" onchange="previewImages(this, 'request-preview')">
                             
                             <div id="request-preview" class="flex flex-wrap gap-2 mb-4"></div>
 
-                            <button class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="submitCleaningRequest()">Submit Request</button>
+                            <button class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="submitCleaningRequest()">요청 제출</button>
                         </div>
                     </div>
 
                     <div class="lg:col-span-2 space-y-4" id="request-list-container">
                         <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center">
                             <i data-lucide="list-ordered" class="w-6 h-6 mr-2"></i>
-                            All Requests List
+                            전체 요청 목록
                         </h2>
                         ${requestsHtml}
                     </div>
@@ -625,7 +635,7 @@
                     <div class="flex items-center space-x-4 p-3 border-b hover:bg-gray-50">
                         <span class="w-1/3 text-gray-700 font-medium">${item.name}</span>
                         <input type="number" id="safety-stock-${item.id}" value="${currentLevel}" min="0" class="w-1/4 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-center">
-                        <span class="text-sm text-gray-500">units (Alert below this level)</span>
+                        <span class="text-sm text-gray-500">개 (이 수준 이하로 떨어지면 알림)</span>
                     </div>
                 `;
             }).join('');
@@ -636,25 +646,25 @@
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
                             <i data-lucide="key" class="w-6 h-6 mr-2"></i>
-                            Admin/Supervisor Password Settings
+                            관리자/수퍼바이저 비밀번호 설정
                         </h2>
                         <div class="space-y-4">
                             <div>
-                                <label for="admin-pw" class="block text-sm font-medium text-gray-700">Admin Password (Current: ${currentPasswords.admin ? 'Set' : 'Not Set'})</label>
-                                <input type="password" id="admin-pw" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="New Admin Password">
+                                <label for="admin-pw" class="block text-sm font-medium text-gray-700">관리자 비밀번호 (현재: ${currentPasswords.admin ? '설정됨' : '미설정'})</label>
+                                <input type="password" id="admin-pw" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="새 관리자 비밀번호">
                             </div>
                             <div>
-                                <label for="supervisor-pw" class="block text-sm font-medium text-gray-700">Supervisor Password (Current: ${currentPasswords.supervisor ? 'Set' : 'Not Set'})</label>
-                                <input type="password" id="supervisor-pw" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="New Supervisor Password">
+                                <label for="supervisor-pw" class="block text-sm font-medium text-gray-700">수퍼바이저 비밀번호 (현재: ${currentPasswords.supervisor ? '설정됨' : '미설정'})</label>
+                                <input type="password" id="supervisor-pw" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="새 수퍼바이저 비밀번호">
                             </div>
-                            <button class="bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updatePasswords)">Save Passwords (Admin Only)</button>
+                            <button class="bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updatePasswords)">비밀번호 저장 (관리자 전용)</button>
                         </div>
                     </div>
                     
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
                             <i data-lucide="calendar-plus" class="w-6 h-6 mr-2"></i>
-                            Weekly Cleaning Plan Setting (10 lines)
+                            주간 청소 계획 설정 (10줄)
                         </h2>
                         <div id="weekly-plan-editor" class="space-y-3">
                             ${window.state.settings.weeklyPlan.map((plan, index) => `
@@ -662,49 +672,49 @@
                                     <select id="plan-day-${index}" class="p-2 border border-gray-300 rounded-lg w-1/4">
                                         ${['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '특이사항'].map(d => `<option value="${d}" ${plan.day === d ? 'selected' : ''}>${d}</option>`).join('')}
                                     </select>
-                                    <input type="text" id="plan-task-${index}" value="${plan.task}" class="p-2 border border-gray-300 rounded-lg w-3/4" placeholder="Cleaning task details">
+                                    <input type="text" id="plan-task-${index}" value="${plan.task}" class="p-2 border border-gray-300 rounded-lg w-3/4" placeholder="청소 작업 내용">
                                 </div>
                             `).join('')}
                         </div>
-                        <button class="mt-4 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updateWeeklyPlan)">Save Weekly Plan (Admin Only)</button>
+                        <button class="mt-4 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updateWeeklyPlan)">주간 계획 저장 (관리자 전용)</button>
                     </div>
 
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
                             <i data-lucide="shield" class="w-6 h-6 mr-2"></i>
-                            Safety Stock / Reorder Quantity Settings
+                            안전 재고/재주문 수량 설정
                         </h2>
                         <div id="safety-stock-editor" class="space-y-2">
                             ${safetyStockRows}
                         </div>
-                        <button class="mt-4 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updateSafetyStock)">Save Safety Stock (Admin Only)</button>
+                        <button class="mt-4 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updateSafetyStock)">안전 재고 저장 (관리자 전용)</button>
                     </div>
 
                     <div class="bg-white p-6 rounded-xl shadow-lg">
                         <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
                             <i data-lucide="list-plus" class="w-6 h-6 mr-2"></i>
-                            Inventory Item Add/Delete (Admin Only)
+                            재고 항목 추가/삭제 (관리자 전용)
                         </h2>
                         
                         <div class="flex space-x-4 mb-6">
-                            <input type="text" id="new-item-name" class="p-3 border border-gray-300 rounded-lg w-1/3" placeholder="New Item Name">
+                            <input type="text" id="new-item-name" class="p-3 border border-gray-300 rounded-lg w-1/3" placeholder="새 항목 이름">
                             <select type="text" id="new-item-category" class="p-3 border border-gray-300 rounded-lg w-1/3">
-                                <option value="consumable">Consumable</option>
-                                <option value="supply">Cleaning Supply</option>
+                                <option value="consumable">소모품</option>
+                                <option value="supply">청소 용품</option>
                             </select>
-                            <input type="number" id="new-item-reorder-level" class="p-3 border border-gray-300 rounded-lg w-1/6" placeholder="Default Reorder Qty" value="10" min="0">
-                            <button class="bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition w-1/6" onclick="checkPassword('admin', addInventoryItem)">Add Item</button>
+                            <input type="number" id="new-item-reorder-level" class="p-3 border border-gray-300 rounded-lg w-1/6" placeholder="기본 재주문 수량" value="10" min="0">
+                            <button class="bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition w-1/6" onclick="checkPassword('admin', addInventoryItem)">항목 추가</button>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
-                                <h3 class="text-xl font-semibold mb-3">Consumables List</h3>
+                                <h3 class="text-xl font-semibold mb-3">소모품 목록</h3>
                                 <ul class="divide-y divide-gray-200">
                                     ${itemRows(window.state.settings.consumables)}
                                 </ul>
                             </div>
                             <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
-                                <h3 class="text-xl font-semibold mb-3">Cleaning Supplies List</h3>
+                                <h3 class="text-xl font-semibold mb-3">청소 용품 목록</h3>
                                 <ul class="divide-y divide-gray-200">
                                     ${itemRows(window.state.settings.supplies)}
                                 </ul>
@@ -721,7 +731,7 @@
             // Function to filter and format logs
             const renderLogTable = (filteredLogs) => {
                 if (filteredLogs.length === 0) {
-                    return '<p class="text-center text-gray-500 py-6">No inventory logs found for the selected period.</p>';
+                    return '<p class="text-center text-gray-500 py-6">선택한 기간에 대한 재고 기록이 없습니다.</p>';
                 }
 
                 return `
@@ -729,19 +739,19 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Item</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                                    <th class="p-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Memo</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">날짜</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">항목</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">구분</th>
+                                    <th class="p-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">수량</th>
+                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">메모</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 ${filteredLogs.map(log => `
                                     <tr class="hover:bg-gray-50">
-                                        <td class="p-3 text-sm text-gray-900">${new Date(log.timestamp.seconds * 1000).toLocaleDateString('en-US')}</td>
+                                        <td class="p-3 text-sm text-gray-900">${new Date(log.timestamp.seconds * 1000).toLocaleDateString('ko-KR')}</td>
                                         <td class="p-3 text-sm text-gray-700">${log.itemName}</td>
-                                        <td class="p-3 text-sm font-medium ${log.type === 'in' ? 'text-blue-600' : 'text-red-600'}">${log.type === 'in' ? 'IN' : 'OUT'}</td>
+                                        <td class="p-3 text-sm font-medium ${log.type === 'in' ? 'text-blue-600' : 'text-red-600'}">${log.type === 'in' ? '입고' : '출고'}</td>
                                         <td class="p-3 text-right text-sm font-bold">${log.quantity}</td>
                                         <td class="p-3 text-sm text-gray-500">${log.memo || '-'}</td>
                                     </tr>
@@ -756,30 +766,30 @@
                 <div class="bg-white p-6 rounded-xl shadow-lg">
                     <h2 class="text-3xl font-bold text-blue-600 mb-6 flex items-center">
                         <i data-lucide="clipboard-list" class="w-7 h-7 mr-2"></i>
-                        Inventory Log Report
+                        재고 기록 보고서
                     </h2>
 
                     <div class="flex flex-wrap items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6 p-4 border rounded-lg bg-gray-50">
-                        <div class="flex-shrink-0 text-sm font-medium text-gray-700">Select Period:</div>
+                        <div class="flex-shrink-0 text-sm font-medium text-gray-700">기간 선택:</div>
                         <input type="date" id="report-start-date" class="p-2 border border-gray-300 rounded-lg">
                         <span>~</span>
                         <input type="date" id="report-end-date" class="p-2 border border-gray-300 rounded-lg">
-                        <button class="bg-gray-700 text-white p-2 rounded-lg hover:bg-gray-800 transition text-sm" onclick="filterLogs()">Filter</button>
+                        <button class="bg-gray-700 text-white p-2 rounded-lg hover:bg-gray-800 transition text-sm" onclick="filterLogs()">필터링</button>
                         
                         <div class="sm:ml-auto flex space-x-2">
                             <button class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition text-sm" onclick="exportToExcel()">
                                 <i data-lucide="file-text" class="w-5 h-5 inline-block mr-1"></i>
-                                Export to Excel (Simulated)
+                                엑셀로 내보내기 (시뮬레이션)
                             </button>
                             <button class="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition text-sm" onclick="window.print()">
                                 <i data-lucide="printer" class="w-5 h-5 inline-block mr-1"></i>
-                                Print
+                                인쇄
                             </button>
                         </div>
                     </div>
 
                     <div id="report-table-container">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700">All Inventory Logs (Most Recent First)</h3>
+                        <h3 class="text-xl font-semibold mb-3 text-gray-700">전체 재고 기록 (최신순)</h3>
                         ${renderLogTable(logs)}
                     </div>
                 </div>
@@ -830,7 +840,7 @@
             const photoInput = document.getElementById('request-photo-input');
             
             if (!message) {
-                window.showMessage('Please enter a request message.', 'error');
+                window.showMessage('요청 메시지를 입력해 주세요.', 'error');
                 return;
             }
 
@@ -860,11 +870,11 @@
                 document.getElementById('request-message').value = '';
                 photoInput.value = '';
                 document.getElementById('request-preview').innerHTML = '';
-                window.showMessage('Cleaning request submitted successfully.', 'success');
+                window.showMessage('청소 요청이 성공적으로 제출되었습니다.', 'success');
 
             } catch (error) {
                 console.error("Error adding cleaning request:", error);
-                window.showMessage(`Request Submission Error: ${error.message}`, 'error');
+                window.showMessage(`요청 제출 오류: ${error.message}`, 'error');
             }
         };
 
@@ -876,10 +886,10 @@
                 // 6 segments path: artifacts/{appId}/public/data/cleaning_requests/{requestId} (Correct for Document)
                 const requestRef = getPublicConfigDocRef('cleaning_requests', requestId); 
                 await updateDoc(requestRef, { status: newStatus });
-                window.showMessage(`Status changed to ${newStatus === '작업중' ? 'In Progress' : 'Completed'}.`, 'success');
+                window.showMessage(`상태가 ${newStatus}로 변경되었습니다.`, 'success');
             } catch (error) {
                 console.error("Error updating request status:", error);
-                window.showMessage(`Status Update Error: ${error.message}`, 'error');
+                window.showMessage(`상태 업데이트 오류: ${error.message}`, 'error');
             }
         };
 
@@ -890,7 +900,7 @@
             const request = window.state.requests.find(r => r.id === requestId);
             
             // Temporary simple modal for completion input
-            const completionMessage = prompt(`Completing request: [${request.requestMessage.substring(0, 20)}...]\n\nEnter the completion message:`);
+            const completionMessage = prompt(`요청 완료: [${request.requestMessage.substring(0, 20)}...]\n\n완료 메시지를 입력하세요:`);
             
             if (completionMessage !== null) {
                 // In a proper app, this would be a full modal with file upload inputs.
@@ -898,10 +908,10 @@
                 let photoCount = 0;
                 let validCount = false;
                 while (!validCount) {
-                    const countInput = prompt('You can attach up to 5 completion photos. How many photos would you like to attach? (Enter a number between 0 and 5)');
+                    const countInput = prompt('최대 5개의 완료 사진을 첨부할 수 있습니다. 몇 개의 사진을 첨부하시겠습니까? (0에서 5 사이의 숫자 입력)');
                     photoCount = parseInt(countInput);
                     if (isNaN(photoCount) || photoCount < 0 || photoCount > 5) {
-                        alert('Please enter a valid number between 0 and 5.');
+                        alert('0에서 5 사이의 유효한 숫자를 입력하세요.');
                     } else {
                         validCount = true;
                     }
@@ -927,10 +937,10 @@
                     completionPhotos: completionPhotos,
                     completedAt: new Date(),
                 });
-                window.showMessage('Task completion successfully saved.', 'success');
+                window.showMessage('작업 완료 보고서가 성공적으로 저장되었습니다.', 'success');
             } catch (error) {
                 console.error("Error completing request:", error);
-                window.showMessage(`Completion Error: ${error.message}`, 'error');
+                window.showMessage(`완료 오류: ${error.message}`, 'error');
             }
         };
 
@@ -940,22 +950,22 @@
         window.openIOModal = (itemId, itemName) => {
             window.state.inventoryActionContext = { itemId, itemName };
             
-            document.getElementById('io-modal-title').textContent = `${itemName} In/Out`;
+            document.getElementById('io-modal-title').textContent = `${itemName} 입/출고`;
             document.getElementById('io-item-name').textContent = itemName;
             document.getElementById('io-quantity').value = 1;
             document.getElementById('io-memo').value = '';
 
             // Localize Modal Content
-            document.querySelector('#io-modal label[for="io-type"]').textContent = 'Type';
-            document.querySelector('#io-modal option[value="in"]').textContent = 'Inbound (IN)';
-            document.querySelector('#io-modal option[value="out"]').textContent = 'Outbound (OUT)';
-            document.querySelector('#io-modal label[for="io-quantity"]').textContent = 'Quantity';
-            document.getElementById('io-quantity').placeholder = 'Enter Quantity';
-            document.querySelector('#io-modal label[for="io-memo"]').textContent = 'Memo (Optional)';
-            document.getElementById('io-memo').placeholder = 'Short Memo';
-            document.querySelector('#io-modal button:last-child').textContent = 'Save';
-            document.querySelector('#io-modal button:first-child').textContent = 'Cancel';
-            document.querySelector('#io-modal p.text-gray-600').innerHTML = `Current Item: <span id="io-item-name" class="font-semibold text-blue-600">${itemName}</span>`;
+            document.querySelector('#io-modal label[for="io-type"]').textContent = '구분';
+            document.querySelector('#io-modal option[value="in"]').textContent = '입고';
+            document.querySelector('#io-modal option[value="out"]').textContent = '출고';
+            document.querySelector('#io-modal label[for="io-quantity"]').textContent = '수량';
+            document.getElementById('io-quantity').placeholder = '수량 입력';
+            document.querySelector('#io-modal label[for="io-memo"]').textContent = '메모 (선택)';
+            document.getElementById('io-memo').placeholder = '간단한 메모';
+            document.querySelector('#io-modal button:last-child').textContent = '저장';
+            document.querySelector('#io-modal button:first-child').textContent = '취소';
+            document.querySelector('#io-modal p.text-gray-600').innerHTML = `현재 항목: <span id="io-item-name" class="font-semibold text-blue-600">${itemName}</span>`;
 
 
             const modal = document.getElementById('io-modal');
@@ -973,6 +983,8 @@
          * Performs the actual inventory log action after password check (Supervisor/Admin only).
          */
         window.performInventoryAction = () => {
+            // [FIX 1] checkPassword가 호출되어 비밀번호 모달이 뜰 때,
+            // 이 모달(io-modal)은 배경에 숨겨져 있으므로, Z-index 수정으로 해결됩니다.
             window.checkPassword('supervisor', executeInventoryLog);
         };
 
@@ -985,7 +997,7 @@
             const memo = document.getElementById('io-memo').value;
 
             if (isNaN(quantity) || quantity <= 0) {
-                window.showMessage('Please enter a valid quantity.', 'error');
+                window.showMessage('유효한 수량을 입력해 주세요.', 'error');
                 return;
             }
 
@@ -1001,12 +1013,12 @@
                     timestamp: new Date(),
                 });
 
-                window.showMessage(`${context.itemName} ${type === 'in' ? 'Inbound' : 'Outbound'} of ${quantity} successfully recorded.`, 'success');
+                window.showMessage(`${context.itemName} ${type === 'in' ? '입고' : '출고'} ${quantity}개가 성공적으로 기록되었습니다.`, 'success');
                 closeIOModal();
 
             } catch (error) {
                 console.error("Error recording inventory log:", error);
-                window.showMessage(`Inventory Log Error: ${error.message}`, 'error');
+                window.showMessage(`재고 기록 오류: ${error.message}`, 'error');
             }
         };
         
@@ -1032,19 +1044,19 @@
             }
 
             if (!changes) {
-                window.showMessage('Please enter a password to change.', 'info');
+                window.showMessage('변경할 비밀번호를 입력해 주세요.', 'info');
                 return;
             }
             
             try {
                 const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
                 await updateDoc(userDocRef, { passwords: newPasswords });
-                window.showMessage('Passwords successfully updated.', 'success');
+                window.showMessage('비밀번호가 성공적으로 업데이트되었습니다.', 'success');
                 document.getElementById('admin-pw').value = '';
                 document.getElementById('supervisor-pw').value = '';
             } catch (error) {
                 console.error("Error updating passwords:", error);
-                window.showMessage(`Password Update Error: ${error.message}`, 'error');
+                window.showMessage(`비밀번호 업데이트 오류: ${error.message}`, 'error');
             }
         };
 
@@ -1063,10 +1075,10 @@
                 // Use the 6-segment config document path
                 const planDocRef = getPublicConfigDocRef('itac_plan');
                 await setDoc(planDocRef, { weeklyPlan: newPlan });
-                window.showMessage('Weekly cleaning plan successfully saved.', 'success');
+                window.showMessage('주간 청소 계획이 성공적으로 저장되었습니다.', 'success');
             } catch (error) {
                 console.error("Error updating weekly plan:", error);
-                window.showMessage(`Plan Update Error: ${error.message}`, 'error');
+                window.showMessage(`계획 업데이트 오류: ${error.message}`, 'error');
             }
         };
         
@@ -1089,10 +1101,10 @@
                 // Use the 6-segment config document path
                 const safetyStockDocRef = getPublicConfigDocRef('itac_safety_stock');
                 await setDoc(safetyStockDocRef, { levels: newLevels });
-                window.showMessage('Safety stock levels successfully saved.', 'success');
+                window.showMessage('안전 재고 수준이 성공적으로 저장되었습니다.', 'success');
             } catch (error) {
                 console.error("Error updating safety stock:", error);
-                window.showMessage(`Safety Stock Update Error: ${error.message}`, 'error');
+                window.showMessage(`안전 재고 업데이트 오류: ${error.message}`, 'error');
             }
         };
 
@@ -1106,7 +1118,7 @@
             const reorderLevel = parseInt(document.getElementById('new-item-reorder-level').value);
 
             if (!name || isNaN(reorderLevel) || reorderLevel < 0) {
-                window.showMessage('Please enter item name and reorder quantity accurately.', 'error');
+                window.showMessage('항목 이름과 재주문 수량을 정확히 입력해 주세요.', 'error');
                 return;
             }
             
@@ -1116,7 +1128,7 @@
 
             const currentList = window.state.settings[category];
             if (currentList.some(item => item.name === name)) {
-                window.showMessage('Item name already exists.', 'error');
+                window.showMessage('항목 이름이 이미 존재합니다.', 'error');
                 return;
             }
             
@@ -1128,10 +1140,10 @@
                 
                 document.getElementById('new-item-name').value = '';
                 document.getElementById('new-item-reorder-level').value = '10';
-                window.showMessage(`${name} (${category === 'consumable' ? 'Consumable' : 'Cleaning Supply'}) item added.`, 'success');
+                window.showMessage(`${name} (${category === 'consumable' ? '소모품' : '청소 용품'}) 항목이 추가되었습니다.`, 'success');
             } catch (error) {
                 console.error("Error adding item:", error);
-                window.showMessage(`Item Addition Error: ${error.message}`, 'error');
+                window.showMessage(`항목 추가 오류: ${error.message}`, 'error');
             }
         };
 
@@ -1144,17 +1156,17 @@
                 const newList = currentList.filter(item => item.id !== itemId);
                 
                 if (newList.length === currentList.length) {
-                    window.showMessage('Item not found.', 'error');
+                    window.showMessage('항목을 찾을 수 없습니다.', 'error');
                     return;
                 }
                 
                 try {
                     const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
                     await updateDoc(userDocRef, { [category]: newList });
-                    window.showMessage(`Item successfully deleted.`, 'success');
+                    window.showMessage(`항목이 성공적으로 삭제되었습니다.`, 'success');
                 } catch (error) {
                     console.error("Error deleting item:", error);
-                    window.showMessage(`Item Deletion Error: ${error.message}`, 'error');
+                    window.showMessage(`항목 삭제 오류: ${error.message}`, 'error');
                 }
             });
         };
@@ -1186,7 +1198,7 @@
             }
 
             container.innerHTML = `
-                <h3 class="text-xl font-semibold mb-3 text-gray-700">Inventory Logs by Period (${startDateStr || 'All'} ~ ${endDateStr || 'All'})</h3>
+                <h3 class="text-xl font-semibold mb-3 text-gray-700">기간별 재고 기록 (${startDateStr || '전체'} ~ ${endDateStr || '전체'})</h3>
                 ${renderLogTable(filteredLogs)}
             `;
             lucide.createIcons();
@@ -1203,11 +1215,11 @@
             window.checkPassword('supervisor', () => {
                 const logs = window.state.inventoryLogs; // Use all logs for export simulation
                 
-                const header = ["Date", "Item", "Type", "Quantity", "Memo"].join('\t');
+                const header = ["날짜", "항목", "구분", "수량", "메모"].join('\t');
                 const rows = logs.map(log => [
-                    new Date(log.timestamp.seconds * 1000).toLocaleDateString('en-US'),
+                    new Date(log.timestamp.seconds * 1000).toLocaleDateString('ko-KR'),
                     log.itemName,
-                    log.type === 'in' ? 'IN' : 'OUT',
+                    log.type === 'in' ? '입고' : '출고',
                     log.quantity,
                     log.memo || '-'
                 ].join('\t'));
@@ -1222,7 +1234,7 @@
                 link.click();
                 document.body.removeChild(link);
                 
-                window.showMessage('Excel file download started (CSV format).', 'info');
+                window.showMessage('Excel 파일 다운로드가 시작되었습니다 (CSV 형식).', 'info');
             });
         };
 
