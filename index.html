@@ -1,541 +1,1571 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ITAC Cleaning Management</title>
-<link href="https://cdn.jsdelivr.net/npm/modern-normalize/modern-normalize.css" rel="stylesheet"/>
-<style>
-  body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:16px;background:#f6f7fb;color:#111}
-  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  h1{margin:0;font-size:20px}
-  .container{display:grid;grid-template-columns:1fr 360px;gap:12px}
-  .card{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 4px rgba(20,20,40,.06)}
-  .weekly{min-height:180px}
-  .requests-list{max-height:420px;overflow:auto}
-  .inventory-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed #eee}
-  button{padding:6px 10px;border-radius:6px;border:0;background:#2b6cb0;color:white;cursor:pointer}
-  .small{font-size:13px;padding:4px 8px}
-  .danger{background:#c53030}
-  .warn{color:#c05621;font-weight:700}
-  input, textarea, select{width:100%;padding:8px;border-radius:6px;border:1px solid #ddd}
-  .modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
-  .modal-content{width:640px;max-width:95%;background:white;padding:14px;border-radius:8px}
-  .flex{display:flex;gap:8px}
-  .col{flex:1}
-  .img-thumb{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #ddd}
-  .note{font-size:13px;color:#555}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITAC Cleaning Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .weekly-schedule {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            min-height: 200px;
+        }
+        
+        .day-schedule {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .day-name {
+            font-weight: bold;
+            color: #3498db;
+            display: inline-block;
+            width: 100px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .btn-warning {
+            background: #f39c12;
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .request-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .request-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .status-pending {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+        
+        .status-working {
+            background: #74b9ff;
+            color: #0984e3;
+        }
+        
+        .status-completed {
+            background: #55efc4;
+            color: #00b894;
+        }
+        
+        .image-preview {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .image-preview-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+        
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .image-preview-item .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: #e74c3c;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .image-preview-item .remove-btn:hover {
+            background: #c0392b;
+        }
+        
+        .image-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 15px;
+        }
+        
+        .inventory-table th,
+        .inventory-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .inventory-table th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .inventory-table tr:hover {
+            background: #f5f5f5;
+            cursor: pointer;
+        }
+        
+        .low-stock {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            color: #856404;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .settings-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #34495e;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .settings-btn:hover {
+            background: #2c3e50;
+        }
+        
+        .settings-menu {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        
+        .settings-menu button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #ecf0f1;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+        }
+        
+        .settings-menu button:hover {
+            background: #bdc3c7;
+        }
+
+        .report-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .report-filters input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #fullImageModal .modal-content {
+            max-width: 800px;
+        }
+
+        #fullImageModal img {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 5px;
+        }
+
+        .schedule-input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .item-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .item-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background: #f9f9f9;
+            margin-bottom: 8px;
+            border-radius: 5px;
+        }
+
+        .item-entry button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .add-item-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .add-item-form input {
+            flex: 1;
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>ITAC Cleaning Management</h1>
+        
+        <div class="section">
+            <div class="section-title">
+                <span>Weekly Cleaning Schedule</span>
+            </div>
+            <div class="weekly-schedule" id="weeklySchedule">
+                <div class="day-schedule"><span class="day-name">Monday:</span> <span id="mon-schedule">Loading...</span></div>
+                <div class="day-schedule"><span class="day-name">Tuesday:</span> <span id="tue-schedule">Loading...</span></div>
+                <div class="day-schedule"><span class="day-name">Wednesday:</span> <span id="wed-schedule">Loading...</span></div>
+                <div class="day-schedule"><span class="day-name">Thursday:</span> <span id="thu-schedule">Loading...</span></div>
+                <div class="day-schedule"><span class="day-name">Friday:</span> <span id="fri-schedule">Loading...</span></div>
+                <div class="day-schedule"><span class="day-name">Saturday:</span> <span id="sat-schedule">Loading...</span></div>
+                <div class="day-schedule"><span class="day-name">Sunday:</span> <span id="sun-schedule">Loading...</span></div>
+            </div>
+        </div>
 
-<header>
-  <h1>ITAC Cleaning Management</h1>
-  <div>
-    <button id="btn-settings">Settings</button>
-    <button id="btn-report" class="small">Reports</button>
-  </div>
-</header>
+        <div class="section">
+            <div class="section-title">
+                <span>Cleaning Requests</span>
+                <button class="btn" id="newRequestBtn">+ New Request</button>
+            </div>
+            <div id="requestsList"></div>
+        </div>
 
-<div class="container">
-  <main>
-    <section class="card weekly" id="weeklyCard">
-      <h3>Weekly Cleaning Plan</h3>
-      <div id="weeklyPlanArea" style="white-space:pre-line;font-family:monospace;min-height:140px"></div>
-      <p class="note">(Displays what admin sets. Can add special plans in Settings.)</p>
-    </section>
+        <div class="section">
+            <div class="section-title">
+                <span>Consumables Inventory</span>
+            </div>
+            <div id="consumablesAlerts"></div>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Current Stock</th>
+                        <th>Safety Stock</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="consumablesTable"></tbody>
+            </table>
+        </div>
 
-    <section class="card" id="newRequestCard" style="margin-top:12px">
-      <h3>New Cleaning Request</h3>
-      <div>
-        <label>Message</label>
-        <textarea id="requestMessage" rows="3" placeholder="Describe the issue..."></textarea>
-      </div>
-      <div style="margin-top:8px">
-        <label>Upload up to 5 images (temporary)</label>
-        <input id="requestImages" type="file" accept="image/*" multiple />
-        <div id="previewArea" style="display:flex;gap:8px;margin-top:8px"></div>
-      </div>
-      <div style="margin-top:10px">
-        <button id="btnCreateRequest">Submit Request</button>
-      </div>
-    </section>
+        <div class="section">
+            <div class="section-title">
+                <span>Cleaning Supplies Inventory</span>
+            </div>
+            <div id="suppliesAlerts"></div>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Current Stock</th>
+                        <th>Safety Stock</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="suppliesTable"></tbody>
+            </table>
+        </div>
 
-    <section class="card" style="margin-top:12px">
-      <h3>Requests</h3>
-      <div id="requestsList" class="requests-list"></div>
-    </section>
-
-  </main>
-
-  <aside>
-    <div class="card">
-      <h4>Consumables Inventory</h4>
-      <div id="consumablesList"></div>
+        <div class="section">
+            <div class="section-title">
+                <span>Inventory Reports</span>
+            </div>
+            <div class="report-filters">
+                <input type="date" id="reportStartDate">
+                <input type="date" id="reportEndDate">
+                <select id="reportType">
+                    <option value="all">All Items</option>
+                    <option value="consumables">Consumables Only</option>
+                    <option value="supplies">Supplies Only</option>
+                </select>
+                <button class="btn" id="generateReportBtn">Generate Report</button>
+                <button class="btn btn-success" id="exportExcelBtn">Export to Excel</button>
+                <button class="btn btn-warning" id="printReportBtn">Print</button>
+            </div>
+            <div id="reportContent"></div>
+        </div>
     </div>
 
-    <div class="card" style="margin-top:12px">
-      <h4>Cleaning Products Inventory</h4>
-      <div id="productsList"></div>
+    <button class="settings-btn" id="settingsBtn">⚙</button>
+
+    <div class="modal" id="requestModal">
+        <div class="modal-content">
+            <h2>New Cleaning Request</h2>
+            <div class="form-group">
+                <label>Upload Photos (Max 5)</label>
+                <button class="btn" id="addMoreImagesBtn">+ Add Photos</button>
+                <input type="file" id="requestImages" accept="image/*" multiple style="display:none;">
+                <div class="image-preview" id="requestImagePreview"></div>
+            </div>
+            <div class="form-group">
+                <label>Request Message</label>
+                <textarea id="requestMessage" placeholder="Describe the cleaning request..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="cancelRequestBtn">Cancel</button>
+                <button class="btn btn-success" id="submitRequestBtn">Submit Request</button>
+            </div>
+        </div>
     </div>
 
-    <div class="card" style="margin-top:12px">
-      <h4>Quick Actions</h4>
-      <button id="btnRefresh" class="small">Refresh</button>
-      <p class="note" style="margin-top:8px">Anyone can view inventory. Input (in/out) requires admin/supervisor password.</p>
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <h2 id="passwordModalTitle">Authentication Required</h2>
+            <div class="form-group">
+                <label>Enter Password</label>
+                <input type="password" id="passwordInput" placeholder="Admin or Supervisor password">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="cancelPasswordBtn">Cancel</button>
+                <button class="btn btn-success" id="submitPasswordBtn">Submit</button>
+            </div>
+        </div>
     </div>
-  </aside>
-</div>
 
-<!-- Modals -->
-<div id="modalRoot"></div>
+    <div class="modal" id="inventoryModal">
+        <div class="modal-content">
+            <h2 id="inventoryModalTitle">Update Inventory</h2>
+            <div class="form-group">
+                <label>Item: <span id="inventoryItemName"></span></label>
+            </div>
+            <div class="form-group">
+                <label>Transaction Type</label>
+                <select id="transactionType">
+                    <option value="in">Stock In</option>
+                    <option value="out">Stock Out</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="transactionQuantity" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label>Notes (Optional)</label>
+                <textarea id="transactionNotes" placeholder="Add notes about this transaction..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="cancelInventoryBtn">Cancel</button>
+                <button class="btn btn-success" id="submitInventoryBtn">Submit</button>
+            </div>
+        </div>
+    </div>
 
-<!-- Firebase SDKs -->
-<script type="module">
-/* ===========================
-   Put firebase config here (you supplied it in your message)
-   ===========================
-*/
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, update, get, child, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
-import { getStorage, ref as sref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-storage.js";
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2>Settings Menu</h2>
+            <div class="settings-menu">
+                <button id="scheduleSettingsBtn">Weekly Schedule Management</button>
+                <button id="consumablesSettingsBtn">Manage Consumables Items</button>
+                <button id="suppliesSettingsBtn">Manage Supplies Items</button>
+                <button id="safetyStockSettingsBtn">Safety Stock Settings</button>
+                <button id="passwordSettingsBtn">Password Management</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="closeSettingsBtn">Close</button>
+            </div>
+        </div>
+    </div>
 
-// ====== YOUR firebaseConfig (from your message) ======
-const firebaseConfig = {
-  apiKey: "AIzaSyD6-IKznyhHIH6eGztJOioL0cDQ57MvNvs",
-  authDomain: "rtu-system-han.firebaseapp.com",
-  databaseURL: "https://rtu-system-han-default-rtdb.firebaseio.com",
-  projectId: "rtu-system-han",
-  storageBucket: "rtu-system-han.firebasestorage.app",
-  messagingSenderId: "960060003353",
-  appId: "1:960060003353:web:25be936a3d3ebea8b0c688",
-  measurementId: "G-D0KT7KEC1H"
-};
+    <div class="modal" id="scheduleSettingsModal">
+        <div class="modal-content">
+            <h2>Weekly Schedule Settings</h2>
+            <div class="form-group">
+                <label>Monday</label>
+                <textarea class="schedule-input" id="schedule-mon"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Tuesday</label>
+                <textarea class="schedule-input" id="schedule-tue"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Wednesday</label>
+                <textarea class="schedule-input" id="schedule-wed"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Thursday</label>
+                <textarea class="schedule-input" id="schedule-thu"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Friday</label>
+                <textarea class="schedule-input" id="schedule-fri"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Saturday</label>
+                <textarea class="schedule-input" id="schedule-sat"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Sunday</label>
+                <textarea class="schedule-input" id="schedule-sun"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="cancelScheduleBtn">Cancel</button>
+                <button class="btn btn-success" id="saveScheduleBtn">Save Schedule</button>
+            </div>
+        </div>
+    </div>
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const storage = getStorage(app);
+    <div class="modal" id="itemsManagementModal">
+        <div class="modal-content">
+            <h2 id="itemsManagementTitle">Manage Items</h2>
+            <div class="add-item-form">
+                <input type="text" id="newItemName" placeholder="Item name">
+                <input type="number" id="newItemStock" placeholder="Initial stock" min="0" value="0">
+                <input type="number" id="newItemSafety" placeholder="Safety stock" min="0" value="0">
+                <button class="btn btn-success" id="addItemBtn">Add</button>
+            </div>
+            <div class="item-list" id="itemsList"></div>
+            <div class="modal-actions">
+                <button class="btn" id="closeItemsManagementBtn">Close</button>
+            </div>
+        </div>
+    </div>
 
-/* ============ Utilities ============ */
-const $ = id => document.getElementById(id);
+    <div class="modal" id="safetyStockModal">
+        <div class="modal-content">
+            <h2>Safety Stock Settings</h2>
+            <h3>Consumables</h3>
+            <div id="consumablesSafetyList"></div>
+            <h3 style="margin-top: 20px;">Supplies</h3>
+            <div id="suppliesSafetyList"></div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="cancelSafetyStockBtn">Cancel</button>
+                <button class="btn btn-success" id="saveSafetyStockBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
-function el(tag, props={}, ...children){
-  const e = document.createElement(tag);
-  Object.assign(e, props);
-  for(const c of children){
-    if (typeof c === 'string') e.appendChild(document.createTextNode(c));
-    else if (c) e.appendChild(c);
-  }
-  return e;
-}
+    <div class="modal" id="passwordManagementModal">
+        <div class="modal-content">
+            <h2>Password Management</h2>
+            <div class="form-group">
+                <label>New Admin Password</label>
+                <input type="password" id="newAdminPassword" placeholder="Enter new admin password">
+            </div>
+            <div class="form-group">
+                <label>New Supervisor Password</label>
+                <input type="password" id="newSupervisorPassword" placeholder="Enter new supervisor password">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="cancelPasswordManagementBtn">Cancel</button>
+                <button class="btn btn-success" id="savePasswordsBtn">Save Passwords</button>
+            </div>
+        </div>
+    </div>
 
-// SHA-256 hashing utility for password compare (browser)
-async function sha256Hex(str){
-  const enc = new TextEncoder().encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', enc);
-  return [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+    <div class="modal" id="fullImageModal">
+        <div class="modal-content">
+            <img id="fullImage" src="" alt="Full size image">
+            <div class="modal-actions">
+                <button class="btn" id="closeFullImageBtn">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="completeRequestModal">
+        <div class="modal-content">
+            <h2>Complete Cleaning Request</h2>
+            <p>Upload photos of the completed work (Max 5).</p>
+            <div class="form-group">
+                <label>Completed Work Photos</label>
+                <input type="file" id="completeRequestImages" accept="image/*" multiple>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="cancelCompleteRequestBtn">Cancel</button>
+                <button class="btn btn-success" id="submitCompleteRequestBtn">Mark as Completed</button>
+            </div>
+        </div>
+    </div>
 
-/* ========== Initial default settings (if DB empty) ========== */
-async function ensureDefaults(){
-  const root = ref(db, '/settings');
-  const snap = await get(child(ref(db), 'settings'));
-  if(!snap.exists()){
-    // default demo passwords: admin: admin123, supervisor: sup123
-    const adminHash = await sha256Hex('admin123');
-    const supHash = await sha256Hex('sup123');
-    await set(ref(db,'settings'), {
-      weeklyPlan: "Mon: \nTue: \nWed: \nThu: \nFri: \nSat: \nSun: \n\nSpecial:",
-      passwords: { admin: adminHash, supervisor: supHash },
-      consumablesItems: {
-        toilet_paper: {label:"Toilet Paper", qty:50, reorderLevel:20},
-        soap: {label:"Soap", qty:30, reorderLevel:10},
-        paper_towels: {label:"Paper Towels", qty:40, reorderLevel:15},
-        trash_large: {label:"Large Trash Bags", qty:25, reorderLevel:10},
-        trash_small: {label:"Small Trash Bags", qty:60, reorderLevel:20}
-      },
-      productsItems: {
-        nabc:{label:"NABC", qty:10, reorderLevel:5},
-        bleach:{label:"Bleach", qty:8, reorderLevel:4},
-        xcelente:{label:"Xcelente", qty:6, reorderLevel:3},
-        ecolyzer:{label:"Eco-Lyzer", qty:7, reorderLevel:3},
-        fast_easy:{label:"Fast & Easy", qty:9, reorderLevel:4},
-        wipes:{label:"Wipes", qty:20, reorderLevel:8},
-        gloves_m:{label:"Gloves M", qty:50, reorderLevel:20},
-        pine_sol:{label:"Pine-sol", qty:6, reorderLevel:3},
-        brown_bag:{label:"Brown bag", qty:30, reorderLevel:10}
-      }
-    });
-  }
-}
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* ============ Render functions ============ */
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6-IKznyhHIH6eGztJOioL0cDQ57MvNvs",
+            authDomain: "rtu-system-han.firebaseapp.com",
+            databaseURL: "https://rtu-system-han-default-rtdb.firebaseio.com",
+            projectId: "rtu-system-han",
+            storageBucket: "rtu-system-han.firebasestorage.app",
+            messagingSenderId: "960060003353",
+            appId: "1:960060003353:web:25be936a3d3ebea8b0c688",
+            measurementId: "G-D0KT7KEC1H"
+        };
 
-function renderWeekly(planText){
-  $('weeklyPlanArea').textContent = planText || "(No weekly plan set)";
-}
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-function renderInventory(itemsObj, containerId, type){
-  const container = $(containerId);
-  container.innerHTML = '';
-  for(const key of Object.keys(itemsObj || {})){
-    const it = itemsObj[key];
-    const row = el('div',{className:'inventory-row'});
-    const left = el('div',{}, el('div',{style:'font-weight:700'}, it.label), el('div',{className:'note'}, `Qty: ${it.qty}  |  Reorder at: ${it.reorderLevel}`));
-    const right = el('div',{}, 
-      el('button',{className:'small',onclick:()=>openInOutModal(type,key,it)}, 'In/Out'),
-      (it.qty <= it.reorderLevel) ? el('div',{style:'marginTop:6px'}, el('span',{className:'warn'}, 'REORDER NEEDED')) : null
-    );
-    row.appendChild(left); row.appendChild(right);
-    container.appendChild(row);
-  }
-}
+        // Global variables
+        let currentAction = null;
+        let currentRequestKey = null;
+        let requestImages = [];
+        let currentManagementType = null;
+        let safetyStockChanges = {};
+        let pendingCompleteRequestKey = null; // For the completion flow
 
-/* ============ Modals ============ */
-function showModal(htmlContent){
-  const root = $('modalRoot');
-  root.innerHTML = '';
-  const modal = el('div',{className:'modal'});
-  const content = el('div',{className:'modal-content'}, htmlContent);
-  modal.appendChild(content);
-  modal.addEventListener('click', (e)=>{ if(e.target===modal){ root.innerHTML=''; } });
-  root.appendChild(modal);
-  return root;
-}
+        // Initialize default data
+        async function initializeData() {
+            // 사용자 요청에 따라, 앱 로드 시마다 기존 청소 요청 데이터를 완전히 삭제하여 목록을 비웁니다.
+            const requestsRef = ref(db, 'requests');
+            await remove(requestsRef);
+            
+            const scheduleRef = ref(db, 'schedule');
+            const scheduleSnapshot = await get(scheduleRef);
+            
+            if (!scheduleSnapshot.exists()) {
+                await set(scheduleRef, {
+                    mon: "General office cleaning",
+                    tue: "Restroom deep cleaning",
+                    wed: "Floor maintenance",
+                    thu: "Window cleaning",
+                    fri: "General maintenance",
+                    sat: "Weekend inspection",
+                    sun: "Rest day"
+                });
+            }
 
-function closeModal(){ $('modalRoot').innerHTML=''; }
+            const consumablesRef = ref(db, 'consumables');
+            const consumablesSnapshot = await get(consumablesRef);
+            
+            if (!consumablesSnapshot.exists()) {
+                await set(consumablesRef, {
+                    'toilet-paper': { name: 'Toilet Paper', stock: 50, safetyStock: 20 },
+                    'liquid-soap': { name: 'Liquid Soap', stock: 30, safetyStock: 10 },
+                    'paper-towels': { name: 'Paper Towels', stock: 40, safetyStock: 15 },
+                    'trash-bags-large': { name: 'Trash Bags (Large)', stock: 25, safetyStock: 10 },
+                    'trash-bags-small': { name: 'Trash Bags (Small)', stock: 35, safetyStock: 15 }
+                });
+            }
 
-/* ============ Auth-like check (admin/supervisor) ============ */
-async function promptPasswordAndCheck(){
-  return new Promise(async (resolve)=>{
-    const cont = el('div',{},
-      el('h3',{},'Enter Admin or Supervisor Password'),
-      el('div',{}, el('input',{id:'pwdInput',placeholder:'password',type:'password'})),
-      el('div',{style:'marginTop:8px;display:flex;gap:8px;justify-content:flex-end'},
-         el('button',{onclick:async ()=>{
-           const val = document.getElementById('pwdInput').value || '';
-           const providedHash = await sha256Hex(val);
-           const snap = await get(child(ref(db), 'settings/passwords'));
-           const pwObj = snap.val() || {};
-           const okAdmin = pwObj.admin === providedHash;
-           const okSup = pwObj.supervisor === providedHash;
-           if(okAdmin) { closeModal(); resolve({role:'admin'}); }
-           else if(okSup){ closeModal(); resolve({role:'supervisor'}); }
-           else { alert('Password incorrect'); }
-         }}, 'Confirm'),
-         el('button',{onclick:()=>{ closeModal(); resolve(null); }}, 'Cancel')
-      )
-    );
-    showModal(cont);
-  });
-}
+            const suppliesRef = ref(db, 'supplies');
+            const suppliesSnapshot = await get(suppliesRef);
+            
+            if (!suppliesSnapshot.exists()) {
+                await set(suppliesRef, {
+                    'nabc': { name: 'NABC', stock: 10, safetyStock: 3 },
+                    'bleach': { name: 'Bleach', stock: 8, safetyStock: 2 },
+                    'xcelente': { name: 'Xcelente', stock: 12, safetyStock: 4 },
+                    'eco-lyzer': { name: 'Eco-Lyzer', stock: 6, safetyStock: 2 },
+                    'fast-easy': { name: 'Fast & Easy', stock: 9, safetyStock: 3 },
+                    'wipes': { name: 'Wipes', stock: 15, safetyStock: 5 },
+                    'gloves-m': { name: 'Gloves M', stock: 20, safetyStock: 8 },
+                    'pine-sol': { name: 'Pine-Sol', stock: 7, safetyStock: 2 },
+                    'brown-bag': { name: 'Brown Bag', stock: 30, safetyStock: 10 }
+                });
+            }
 
-/* ============ Open in/out modal ============ */
-async function openInOutModal(type,key,item){
-  // ask password first
-  const auth = await promptPasswordAndCheck();
-  if(!auth){ return; }
-  const cont = el('div',{},
-    el('h3',{},`Inventory: ${item.label}`),
-    el('div',{},el('label',{},'Action'), el('select',{id:'ioAction'}, el('option',{value:'in'},'IN'), el('option',{value:'out'},'OUT'))),
-    el('div',{},el('label',{},'Quantity'), el('input',{id:'ioQty',type:'number',min:1,placeholder:'1'})),
-    el('div',{style:'marginTop:8px;display:flex;gap:8px;justify-content:flex-end'},
-      el('button',{onclick:async ()=>{
-        const action = document.getElementById('ioAction').value;
-        const qty = Number(document.getElementById('ioQty').value) || 0;
-        if(qty<=0){ alert('Enter valid qty'); return; }
-        const itemPath = (type==='consumables')?`settings/consumablesItems/${key}`:`settings/productsItems/${key}`;
-        // transactional update
-        const itemRef = child(ref(db), itemPath);
-        const snap = await get(itemRef);
-        if(!snap.exists()){ alert('Item missing'); return; }
-        const cur = snap.val();
-        const newQty = (action==='in')? cur.qty + qty : cur.qty - qty;
-        await update(itemRef, { qty: newQty });
-        // add log
-        await push(ref(db,'logs'), { itemKey:key, itemLabel:cur.label, type, action, qty, by:auth.role, ts: Date.now() });
-        closeModal();
-      }}, 'Save'),
-      el('button',{onclick:()=>closeModal()}, 'Cancel')
-    )
-  );
-  showModal(cont);
-}
+            const passwordsRef = ref(db, 'passwords');
+            const passwordsSnapshot = await get(passwordsRef);
+            
+            if (!passwordsSnapshot.exists()) {
+                await set(passwordsRef, {
+                    admin: 'admin123',
+                    supervisor: 'super123'
+                });
+            }
+        }
 
-/* ============ Requests handling ============ */
-let currentUploadFiles = [];
+        // Load weekly schedule
+        function loadSchedule() {
+            const scheduleRef = ref(db, 'schedule');
+            onValue(scheduleRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById('mon-schedule').textContent = data.mon || 'No schedule';
+                    document.getElementById('tue-schedule').textContent = data.tue || 'No schedule';
+                    document.getElementById('wed-schedule').textContent = data.wed || 'No schedule';
+                    document.getElementById('thu-schedule').textContent = data.thu || 'No schedule';
+                    document.getElementById('fri-schedule').textContent = data.fri || 'No schedule';
+                    document.getElementById('sat-schedule').textContent = data.sat || 'No schedule';
+                    document.getElementById('sun-schedule').textContent = data.sun || 'No schedule';
+                }
+            });
+        }
 
-$('requestImages').addEventListener('change', (ev)=>{
-  const fl = Array.from(ev.target.files).slice(0,5);
-  currentUploadFiles = fl;
-  const preview = $('previewArea'); preview.innerHTML='';
-  fl.forEach(f=>{
-    const img = document.createElement('img');
-    img.className='img-thumb';
-    img.src = URL.createObjectURL(f);
-    img.title = f.name;
-    img.addEventListener('click', ()=> showImageModal(img.src));
-    preview.appendChild(img);
-  });
-});
+        // Load cleaning requests - MODIFIED to only show message if not empty
+        function loadRequests() {
+            const requestsRef = ref(db, 'requests');
+            onValue(requestsRef, (snapshot) => {
+                const container = document.getElementById('requestsList');
+                container.innerHTML = '';
+                
+                const data = snapshot.val();
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        const request = data[key];
+                        const statusClass = request.status === 'pending' ? 'status-pending' : 
+                                          request.status === 'working' ? 'status-working' : 'status-completed';
+                        
+                        const div = document.createElement('div');
+                        div.className = 'request-item';
+                        
+                        let html = `
+                            <div>
+                                <strong>Request #${key.substr(-6)}</strong>
+                                <span class="request-status ${statusClass}">${request.status.toUpperCase()}</span>
+                            </div>
+                        `;
 
-function showImageModal(src){
-  const content = el('div',{},
-    el('img',{src, style:'max-width:100%;max-height:70vh;border-radius:6px'}),
-    el('div',{style:'text-align:right;marginTop:8px'}, el('button',{onclick:()=>closeModal()}, 'Close'))
-  );
-  showModal(content);
-}
+                        // Only display the request message if it is not empty after trimming
+                        if (request.message && request.message.trim().length > 0) {
+                            html += `<p>${request.message}</p>`;
+                        }
+                        
+                        // Original Images
+                        if (request.images && request.images.length > 0) {
+                            html += '<div style="margin-top: 15px;"><strong>Original Request:</strong><div class="image-preview">';
+                            request.images.forEach(img => {
+                                html += `<img src="${img}" data-img="${img}">`;
+                            });
+                            html += '</div></div>';
+                        }
+                        
+                        // Action Buttons
+                        if (request.status === 'pending') {
+                            html += `<button class="btn btn-success" data-action="approve" data-key="${key}">Approve & Start Work</button>`;
+                        } else if (request.status === 'working') {
+                            html += `<button class="btn btn-warning" data-action="complete" data-key="${key}">Complete Work</button>`;
+                        }
+                        
+                        // Completed Work Images
+                        if (request.status === 'completed') {
+                            if (request.completedImages && request.completedImages.length > 0) {
+                                html += '<div style="margin-top: 15px;"><strong>Completed Work:</strong><div class="image-preview">';
+                                request.completedImages.forEach(img => {
+                                    html += `<img src="${img}" data-img="${img}">`;
+                                });
+                                html += '</div></div>';
+                            }
+                            // Delete button for completed requests (Admin/Supervisor only, password required)
+                            html += `<button class="btn btn-danger" data-action="delete" data-key="${key}">Delete Request</button>`;
+                        }
+                        
+                        div.innerHTML = html;
+                        container.appendChild(div);
+                    });
+                    
+                    // Add event listeners for images
+                    container.querySelectorAll('img[data-img]').forEach(img => {
+                        img.addEventListener('click', () => showFullImage(img.dataset.img));
+                    });
+                    
+                    // Add event listeners for buttons
+                    container.querySelectorAll('button[data-action]').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const action = btn.dataset.action;
+                            const key = btn.dataset.key;
+                            
+                            if (action === 'approve') {
+                                // Password required for approval (Admin/Supervisor)
+                                currentRequestKey = key;
+                                document.getElementById('passwordModalTitle').textContent = 'Admin/Supervisor Authentication for Approval';
+                                document.getElementById('passwordModal').dataset.intendedAction = 'approve';
+                                document.getElementById('passwordModal').classList.add('active');
+                            } else if (action === 'complete') {
+                                // No password required for completion
+                                pendingCompleteRequestKey = key;
+                                openCompleteRequestModal();
+                            } else if (action === 'delete') {
+                                // Password required for deletion (Admin/Supervisor)
+                                currentRequestKey = key;
+                                document.getElementById('passwordModalTitle').textContent = 'Admin/Supervisor Authentication for Deletion';
+                                document.getElementById('passwordModal').dataset.intendedAction = 'delete';
+                                document.getElementById('passwordModal').classList.add('active');
+                            }
+                        });
+                    });
+                } else {
+                    container.innerHTML = '<p>No cleaning requests at this time.</p>';
+                }
+            });
+        }
 
-$('btnCreateRequest').addEventListener('click', async ()=>{
-  const msg = $('requestMessage').value.trim();
-  const idRef = push(ref(db,'requests'));
-  const id = idRef.key;
-  // upload images to storage temporarily
-  const imgUrls = [];
-  for(let i=0;i<currentUploadFiles.length && i<5;i++){
-    const f = currentUploadFiles[i];
-    const path = `requests/${id}/${Date.now()}_${f.name}`;
-    const stRef = sref(storage, path);
-    const up = await uploadBytes(stRef, f);
-    const url = await getDownloadURL(stRef);
-    imgUrls.push({path, url});
-  }
-  await set(idRef, {
-    message: msg,
-    images: imgUrls,
-    status: 'New',
-    createdAt: Date.now()
-  });
-  // reset UI
-  $('requestMessage').value=''; $('requestImages').value=''; $('previewArea').innerHTML=''; currentUploadFiles=[];
-  alert('Request submitted');
-});
+        // Load inventory
+        function loadInventory(type, tableId, alertsId) {
+            const inventoryRef = ref(db, type);
+            onValue(inventoryRef, (snapshot) => {
+                const table = document.getElementById(tableId);
+                const alerts = document.getElementById(alertsId);
+                table.innerHTML = '';
+                alerts.innerHTML = '';
+                
+                const data = snapshot.val();
+                if (data) {
+                    let lowStockItems = [];
+                    
+                    Object.keys(data).forEach(key => {
+                        const item = data[key];
+                        const isLowStock = item.stock <= item.safetyStock;
+                        
+                        if (isLowStock) {
+                            lowStockItems.push(item.name);
+                        }
+                        
+                        const row = document.createElement('tr');
+                        row.dataset.type = type;
+                        row.dataset.key = key;
+                        row.dataset.name = item.name;
+                        row.innerHTML = `
+                            <td>${item.name}</td>
+                            <td ${isLowStock ? 'class="low-stock"' : ''}>${item.stock}</td>
+                            <td>${item.safetyStock}</td>
+                            <td>${isLowStock ? '<span class="low-stock">⚠ LOW STOCK - ORDER NEEDED</span>' : '✓ Good'}</td>
+                        `;
+                        table.appendChild(row);
+                    });
+                    
+                    // Add click listeners to rows
+                    table.querySelectorAll('tr[data-type]').forEach(row => {
+                        row.addEventListener('click', () => {
+                            openInventoryModal(row.dataset.type, row.dataset.key, row.dataset.name);
+                        });
+                    });
+                    
+                    if (lowStockItems.length > 0) {
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert';
+                        alertDiv.innerHTML = `<strong>⚠ Order Alert:</strong> ${lowStockItems.join(', ')}`;
+                        alerts.appendChild(alertDiv);
+                    }
+                }
+            });
+        }
 
-/* ========= Render live DB data ========= */
-async function bindRealtime(){
-  // ensure defaults
-  await ensureDefaults();
+        // Modal functions
+        function openRequestModal() {
+            document.getElementById('requestModal').classList.add('active');
+            requestImages = [];
+            updateImagePreview();
+            document.getElementById('requestMessage').value = '';
+        }
 
-  // weekly plan
-  onValue(ref(db,'settings/weeklyPlan'), snap=>{
-    renderWeekly(snap.val());
-  });
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
 
-  // settings items
-  onValue(ref(db,'settings/consumablesItems'), snap=>{
-    renderInventory(snap.val(), 'consumablesList', 'consumables');
-  });
-  onValue(ref(db,'settings/productsItems'), snap=>{
-    renderInventory(snap.val(), 'productsList', 'products');
-  });
+        function showFullImage(src) {
+            document.getElementById('fullImage').src = src;
+            document.getElementById('fullImageModal').classList.add('active');
+        }
 
-  // requests
-  onValue(ref(db,'requests'), snap=>{
-    const list = $('requestsList');
-    list.innerHTML = '';
-    const data = snap.val() || {};
-    const keys = Object.keys(data).reverse();
-    keys.forEach(k=>{
-      const r = data[k];
-      const card = el('div',{style:'padding:8px;border-bottom:1px solid #eee'});
-      card.appendChild(el('div',{style:'font-weight:700'}, r.message || '(no message)'));
-      if(r.images && r.images.length){
-        const wrap = el('div',{style:'display:flex;gap:6px;marginTop:6px'});
-        r.images.forEach(im => {
-          const img = el('img',{src:im.url,className:'img-thumb',onclick:()=>showImageModal(im.url)});
-          wrap.appendChild(img);
+        // Update image preview with remove buttons
+        function updateImagePreview() {
+            const preview = document.getElementById('requestImagePreview');
+            preview.innerHTML = '';
+            
+            requestImages.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'image-preview-item';
+                // Note: The onclick in HTML will not work directly due to the script being a module, 
+                // but the event listeners below handle it on the request item rendering. For the modal preview, 
+                // we'll rely on the manual event listener attached after the element is appended, 
+                // or just keep the visual representation.
+                div.innerHTML = `
+                    <img src="${img}" data-img="${img}">
+                    <div class="remove-btn" data-index="${index}">×</div>
+                `;
+                preview.appendChild(div);
+                
+                // Add click listener to image for full preview
+                div.querySelector('img').addEventListener('click', () => showFullImage(img));
+            });
+            
+            // Add remove button listeners
+            preview.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const index = parseInt(this.dataset.index);
+                    requestImages.splice(index, 1);
+                    updateImagePreview();
+                });
+            });
+        }
+
+        // Request image handling
+        document.getElementById('addMoreImagesBtn').addEventListener('click', function() {
+            if (requestImages.length >= 5) {
+                alert('Maximum 5 images allowed');
+                return;
+            }
+            document.getElementById('requestImages').click();
         });
-        card.appendChild(wrap);
-      }
-      const status = el('div',{style:'marginTop:8px'}, el('span',{}, `Status: ${r.status || 'New'}`));
-      card.appendChild(status);
-      const actions = el('div',{style:'marginTop:8px;display:flex;gap:8px;justify-content:flex-end'});
-      // Anyone can accept -> mark In Progress (but requires admin/sup)
-      const btnAccept = el('button',{onclick:async ()=>{
-        const auth = await promptPasswordAndCheck();
-        if(!auth) return;
-        await update(ref(db,`requests/${k}`), { status:'In Progress', assignedBy:auth.role, assignedAt: Date.now() });
-      }}, 'Accept (In Progress)');
-      const btnComplete = el('button',{onclick:async ()=>{
-        const auth = await promptPasswordAndCheck();
-        if(!auth) return;
-        // allow completion only by admin/supervisor — our prompt enforces that already
-        // allow upload of completion images
-        showCompletionUploader(k);
-      }, className:'small'}, 'Complete (upload photos)');
-      const btnDelete = el('button',{onclick:async ()=>{
-        // delete images in storage then remove request
-        if(!confirm('Delete request and images?')) return;
-        const rSnap = (await get(child(ref(db),`requests/${k}`))).val();
-        if(rSnap && rSnap.images){
-          for(const im of (rSnap.images||[])){
-            try{ await deleteObject(sref(storage, im.path)); }catch(e){}
-          }
-        }
-        await set(ref(db,`requests/${k}`), null);
-      }, className:'small'}, 'Delete');
-      actions.appendChild(btnAccept); actions.appendChild(btnComplete); actions.appendChild(btnDelete);
-      card.appendChild(actions);
-      list.appendChild(card);
-    });
-  });
-}
 
-// completion uploader
-function showCompletionUploader(requestId){
-  const input = el('input',{type:'file',multiple:true,accept:'image/*'});
-  const content = el('div',{},
-    el('h3',{},'Upload completion photos (up to 5)'),
-    input,
-    el('div',{style:'marginTop:8px;display:flex;justify-content:flex-end'},
-      el('button',{onclick:async ()=>{
-        const fl = Array.from(input.files).slice(0,5);
-        const urls = [];
-        for(const f of fl){
-          const path = `requests/${requestId}/complete/${Date.now()}_${f.name}`;
-          const st = sref(storage, path);
-          await uploadBytes(st, f);
-          const url = await getDownloadURL(st);
-          urls.push({path,url});
-        }
-        await update(ref(db,`requests/${requestId}`), { status:'Completed', completedAt: Date.now(), completionImages:urls });
-        // remove original images (they were temporary)
-        const rSnap = await get(child(ref(db), `requests/${requestId}`));
-        const r = rSnap.val();
-        if(r && r.images){
-          for(const im of r.images){ try{ await deleteObject(sref(storage, im.path)); }catch(e){} }
-          await update(ref(db,`requests/${requestId}`), { images: null });
-        }
-        closeModal();
-      }}, 'Upload & Mark Complete'),
-      el('button',{onclick:()=>closeModal()}, 'Cancel')
-    )
-  );
-  showModal(content);
-}
-
-/* ============ Settings UI ============ */
-$('btn-settings').addEventListener('click', async ()=>{
-  const auth = await promptPasswordAndCheck();
-  // Only admin should open settings to change passwords — but viewing settings could be open to admin/supervisor. 
-  if(!auth){ return; }
-  // load settings snapshot
-  const snap = await get(ref(db,'settings'));
-  const s = snap.val() || {};
-  const weekly = s.weeklyPlan || '';
-  const passwords = s.passwords || {};
-  const consumables = s.consumablesItems || {};
-  const products = s.productsItems || {};
-
-  const weeklyArea = el('textarea',{id:'settingsWeekly',rows:10,style:'width:100%'}); weeklyArea.value = weekly;
-
-  // build list editors for items
-  function itemsEditor(obj, idPrefix){
-    const frag = el('div',{});
-    for(const k of Object.keys(obj||{})){
-      const it = obj[k];
-      const row = el('div',{style:'display:flex;gap:8px;margin-bottom:6px'},
-        el('input',{value:k,disabled:true,style:'width:30%'}),
-        el('input',{value:it.label,style:'width:40%'}),
-        el('input',{type:'number',value:it.qty,style:'width:15%'}),
-        el('input',{type:'number',value:it.reorderLevel,style:'width:15%'}),
-        el('button',{onclick:async ()=>{
-          // remove
-          if(!confirm('Delete item?')) return;
-          await update(ref(db,'settings'), {}); // just to ensure write availability
-          await set(ref(db,`settings/${idPrefix}/${k}`), null);
-          closeModal(); // force refresh
-        }}, 'Del')
-      );
-      frag.appendChild(row);
-    }
-    return frag;
-  }
-
-  const content = el('div',{},
-    el('h3',{},'Settings'),
-    el('div',{}, el('label',{},'Weekly Cleaning Plan'), weeklyArea),
-    el('h4',{},'Consumables Items'),
-    itemsEditor(consumables,'consumablesItems'),
-    el('p',{className:'note'}, 'To add or edit items, use the DB directly or extend this UI.'),
-    el('h4',{},'Cleaning Products Items'),
-    itemsEditor(products,'productsItems'),
-    el('h4',{},'Change Passwords (Admin only)'),
-    el('p',{}, el('label',{},'New Admin Password'), el('input',{id:'newAdminPass',type:'password'})),
-    el('p',{}, el('label',{},'New Supervisor Password'), el('input',{id:'newSupPass',type:'password'})),
-    el('div',{style:'margin-top:8px;display:flex;justify-content:flex-end;gap:8px'},
-      el('button',{onclick:async ()=>{
-        // save weekly + optional password changes
-        const newWeekly = document.getElementById('settingsWeekly').value;
-        await update(ref(db,'settings'), { weeklyPlan: newWeekly });
-        const na = document.getElementById('newAdminPass').value.trim();
-        const ns = document.getElementById('newSupPass').value.trim();
-        if(na){
-          const h = await sha256Hex(na);
-          await update(ref(db,'settings/passwords'), { admin: h });
-        }
-        if(ns){
-          const h2 = await sha256Hex(ns);
-          await update(ref(db,'settings/passwords'), { supervisor: h2 });
-        }
-        alert('Settings saved');
-        closeModal();
-      }}, 'Save'),
-      el('button',{onclick:()=>closeModal()}, 'Cancel')
-    )
-  );
-  showModal(content);
-});
-
-/* ============ Reports ============ */
-$('btn-report').addEventListener('click', async ()=>{
-  // simple report builder: choose date range then fetch logs
-  const content = el('div',{},
-    el('h3',{},'Reports - Inventory Logs'),
-    el('div',{}, el('label',{},'From (timestamp)'), el('input',{id:'rFrom',type:'date'})),
-    el('div',{}, el('label',{},'To (timestamp)'), el('input',{id:'rTo',type:'date'})),
-    el('div',{style:'margin-top:8px;display:flex;justify-content:flex-end;gap:8px'},
-      el('button',{onclick:async ()=>{
-        const f = document.getElementById('rFrom').value;
-        const t = document.getElementById('rTo').value;
-        const fromTs = f ? new Date(f).getTime() : 0;
-        const toTs = t ? new Date(t).getTime() + 24*3600*1000 -1 : Date.now();
-        const snap = await get(ref(db,'logs'));
-        const logs = snap.val() || {};
-        const rows = [];
-        for(const k of Object.keys(logs)){
-          const L = logs[k];
-          if(L.ts >= fromTs && L.ts <= toTs) rows.push(L);
-        }
-        // show and export
-        const table = el('div',{}, el('h4',{},`Found ${rows.length} logs`));
-        const ttxt = rows.map(r=>`${new Date(r.ts).toLocaleString()},${r.itemLabel},${r.action},${r.qty},${r.by}`).join('\n');
-        const exportBtn = el('button',{onclick:()=>{
-          const csv = 'Date,Item,Action,Qty,By\n' + ttxt;
-          const blob = new Blob([csv], {type:'text/csv'});
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a'); a.href=url; a.download = 'inventory_logs.csv'; a.click();
-        }}, 'Export CSV');
-        const printBtn = el('button',{onclick:()=>{ window.print(); }}, 'Print');
-        table.appendChild(exportBtn); table.appendChild(printBtn);
-        const list = el('div',{style:'max-height:300px;overflow:auto;marginTop:8px'});
-        rows.forEach(r=>{
-          list.appendChild(el('div',{}, `${new Date(r.ts).toLocaleString()} | ${r.itemLabel} | ${r.action} ${r.qty} | by: ${r.by}`));
+        document.getElementById('requestImages').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const remaining = 5 - requestImages.length;
+            
+            if (files.length > remaining) {
+                alert(`You can only add ${remaining} more image(s)`);
+            }
+            
+            const filesToAdd = files.slice(0, remaining);
+            
+            let processed = 0;
+            filesToAdd.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    requestImages.push(event.target.result);
+                    processed++;
+                    if (processed === filesToAdd.length) {
+                        updateImagePreview();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Reset input
+            e.target.value = '';
         });
-        const rootc = showModal(el('div',{}, table, list, el('div',{style:'marginTop:8px;display:flex;justify-content:flex-end'}, el('button',{onclick:()=>closeModal()}, 'Close'))));
-      }}, 'Generate'),
-      el('button',{onclick:()=>closeModal()}, 'Close')
-    )
-  );
-  showModal(content);
-});
 
-/* ============ Init ============ */
-(async function(){
-  await bindRealtime();
-})();
+        // Submit request - MODIFIED
+        async function submitRequest() {
+            const message = document.getElementById('requestMessage').value.trim();
+            
+            if (!message) {
+                // 메시지가 필수는 아니지만, 기본적으로는 요청 메시지를 입력하도록 안내합니다.
+                // 이전 요청에서 사용자가 내용을 입력하지 않고 Submit하면 빈 메시지가 저장될 수 있습니다.
+                // 여기서는 "아무나 할 수 있다"는 요청에 따라 필수로 처리하지 않습니다.
+                console.warn('Request submitted without message.');
+            }
+            
+            const requestsRef = ref(db, 'requests');
+            const newRequestRef = push(requestsRef);
+            
+            await set(newRequestRef, {
+                message: message,
+                images: requestImages,
+                status: 'pending',
+                timestamp: Date.now()
+            });
+            
+            alert('Request submitted successfully!');
+            closeModal('requestModal'); // Close modal after successful submission
+        }
 
-</script>
+        // Approve request - MODIFIED
+        async function approveRequest(key, passwords) {
+            const requestRef = ref(db, `requests/${key}`);
+            await update(requestRef, { status: 'working' });
+            alert('Request approved! Status changed to working.');
+            currentRequestKey = null; // Clear key
+        }
+        
+        // Open Complete Request Modal - NEW
+        function openCompleteRequestModal() {
+            document.getElementById('completeRequestModal').classList.add('active');
+            document.getElementById('completeRequestImages').value = ''; // Reset file input
+        }
+        
+        // Submit Complete Request - NEW
+        document.getElementById('submitCompleteRequestBtn').addEventListener('click', async function() {
+            if (!pendingCompleteRequestKey) {
+                alert('Error: No request selected for completion.');
+                closeModal('completeRequestModal');
+                return;
+            }
+            
+            const fileInput = document.getElementById('completeRequestImages');
+            const files = Array.from(fileInput.files).slice(0, 5);
+            
+            const completedImages = [];
+            
+            for (const file of files) {
+                const reader = new FileReader();
+                const dataUrl = await new Promise((resolve) => {
+                    reader.onload = (event) => resolve(event.target.result);
+                    reader.readAsDataURL(file);
+                });
+                completedImages.push(dataUrl);
+            }
+            
+            await completeRequest(pendingCompleteRequestKey, completedImages);
+            
+            closeModal('completeRequestModal');
+            pendingCompleteRequestKey = null;
+        });
+        
+        document.getElementById('cancelCompleteRequestBtn').addEventListener('click', () => {
+            closeModal('completeRequestModal');
+            pendingCompleteRequestKey = null;
+        });
+
+
+        // Complete request - MODIFIED (Removed password check)
+        async function completeRequest(key, completedImages) {
+            const requestRef = ref(db, `requests/${key}`);
+            await update(requestRef, {
+                status: 'completed',
+                completedImages: completedImages,
+                completedTimestamp: Date.now()
+            });
+            
+            alert('Request marked as completed!');
+        }
+        
+        // Delete request - NEW
+        async function deleteRequest(key) {
+            if (confirm('Are you absolutely sure you want to permanently delete this request? This action cannot be undone.')) {
+                const requestRef = ref(db, `requests/${key}`);
+                await remove(requestRef);
+                alert('Request deleted successfully!');
+                currentRequestKey = null; // Clear key
+            } else {
+                currentRequestKey = null;
+            }
+        }
+
+        // Open inventory modal
+        function openInventoryModal(type, key, name) {
+            currentAction = { type, key };
+            document.getElementById('inventoryItemName').textContent = name;
+            document.getElementById('passwordModalTitle').textContent = 'Authentication Required for Inventory Update';
+            document.getElementById('passwordModal').dataset.intendedAction = 'inventory';
+            document.getElementById('passwordModal').classList.add('active');
+        }
+
+        // Verify password - MODIFIED to handle different intended actions
+        async function verifyPassword() {
+            const password = document.getElementById('passwordInput').value;
+            const intendedAction = document.getElementById('passwordModal').dataset.intendedAction;
+            
+            const passwordsRef = ref(db, 'passwords');
+            const snapshot = await get(passwordsRef);
+            const passwords = snapshot.val();
+            
+            const isAdminOrSupervisor = (password === passwords.admin || password === passwords.supervisor);
+            
+            closeModal('passwordModal');
+            document.getElementById('passwordInput').value = '';
+            
+            if (isAdminOrSupervisor) {
+                if (intendedAction === 'inventory') {
+                    document.getElementById('inventoryModal').classList.add('active');
+                } else if (intendedAction === 'approve') {
+                    if (currentRequestKey) {
+                        await approveRequest(currentRequestKey, passwords);
+                    }
+                } else if (intendedAction === 'delete') {
+                    if (currentRequestKey) {
+                        await deleteRequest(currentRequestKey);
+                    }
+                }
+            } else {
+                alert('Invalid password!');
+                currentRequestKey = null; // Clear request key if authentication fails
+            }
+        }
+
+        // Submit inventory transaction
+        async function submitInventoryTransaction() {
+            const type = document.getElementById('transactionType').value;
+            const quantity = parseInt(document.getElementById('transactionQuantity').value);
+            const notes = document.getElementById('transactionNotes').value;
+            
+            const itemRef = ref(db, `${currentAction.type}/${currentAction.key}`);
+            const snapshot = await get(itemRef);
+            const item = snapshot.val();
+            
+            let newStock = item.stock;
+            if (type === 'in') {
+                newStock += quantity;
+            } else {
+                newStock -= quantity;
+                if (newStock < 0) {
+                    alert('Cannot reduce stock below zero!');
+                    return;
+                }
+            }
+            
+            await update(itemRef, { stock: newStock });
+            
+            // Log transaction
+            const transactionsRef = ref(db, 'transactions');
+            const newTransactionRef = push(transactionsRef);
+            await set(newTransactionRef, {
+                itemType: currentAction.type,
+                itemKey: currentAction.key,
+                itemName: item.name,
+                type: type,
+                quantity: quantity,
+                previousStock: item.stock,
+                newStock: newStock,
+                notes: notes,
+                timestamp: Date.now()
+            });
+            
+            alert('Inventory updated successfully!');
+            closeModal('inventoryModal');
+            document.getElementById('transactionQuantity').value = 1;
+            document.getElementById('transactionNotes').value = '';
+            currentAction = null; // Clear action
+        }
+
+        // Settings functions
+        async function openSettingsMenu() {
+            const passwordsRef = ref(db, 'passwords');
+            const snapshot = await get(passwordsRef);
+            const passwords = snapshot.val();
+            
+            const password = prompt('Enter Admin Password:');
+            if (password === passwords.admin) {
+                document.getElementById('settingsModal').classList.add('active');
+            } else {
+                alert('Invalid password!');
+            }
+        }
+
+        async function openScheduleSettings() {
+            closeModal('settingsModal');
+            const scheduleRef = ref(db, 'schedule');
+            const snapshot = await get(scheduleRef);
+            const data = snapshot.val();
+            
+            if (data) {
+                document.getElementById('schedule-mon').value = data.mon || '';
+                document.getElementById('schedule-tue').value = data.tue || '';
+                document.getElementById('schedule-wed').value = data.wed || '';
+                document.getElementById('schedule-thu').value = data.thu || '';
+                document.getElementById('schedule-fri').value = data.fri || '';
+                document.getElementById('schedule-sat').value = data.sat || '';
+                document.getElementById('schedule-sun').value = data.sun || '';
+            }
+            
+            document.getElementById('scheduleSettingsModal').classList.add('active');
+        }
+
+        async function saveScheduleSettings() {
+            const scheduleRef = ref(db, 'schedule');
+            await set(scheduleRef, {
+                mon: document.getElementById('schedule-mon').value,
+                tue: document.getElementById('schedule-tue').value,
+                wed: document.getElementById('schedule-wed').value,
+                thu: document.getElementById('schedule-thu').value,
+                fri: document.getElementById('schedule-fri').value,
+                sat: document.getElementById('schedule-sat').value,
+                sun: document.getElementById('schedule-sun').value
+            });
+            alert('Schedule saved successfully!');
+            closeModal('scheduleSettingsModal');
+        }
+
+        // Items management
+        async function openItemsManagement(type) {
+            closeModal('settingsModal');
+            currentManagementType = type;
+            const title = type === 'consumables' ? 'Manage Consumables Items' : 'Manage Cleaning Supplies Items';
+            document.getElementById('itemsManagementTitle').textContent = title;
+            
+            await loadItemsManagementList();
+            document.getElementById('itemsManagementModal').classList.add('active');
+        }
+
+        async function loadItemsManagementList() {
+            const itemsRef = ref(db, currentManagementType);
+            const snapshot = await get(itemsRef);
+            const data = snapshot.val();
+            const list = document.getElementById('itemsList');
+            list.innerHTML = '';
+            
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    const div = document.createElement('div');
+                    div.className = 'item-entry';
+                    div.innerHTML = `
+                        <span><strong>${item.name}</strong> - Stock: ${item.stock}, Safety: ${item.safetyStock}</span>
+                        <button class="btn btn-danger btn-sm" data-key="${key}">Delete</button>
+                    `;
+                    list.appendChild(div);
+                });
+                
+                // Add delete listeners
+                list.querySelectorAll('button[data-key]').forEach(btn => {
+                    btn.addEventListener('click', async function() {
+                        if (confirm('Are you sure you want to delete this item?')) {
+                            const itemRef = ref(db, `${currentManagementType}/${this.dataset.key}`);
+                            await remove(itemRef);
+                            await loadItemsManagementList();
+                        }
+                    });
+                });
+            } else {
+                list.innerHTML = '<p>No items found.</p>';
+            }
+        }
+
+        async function addNewItem() {
+            const name = document.getElementById('newItemName').value.trim();
+            const stock = parseInt(document.getElementById('newItemStock').value);
+            const safetyStock = parseInt(document.getElementById('newItemSafety').value);
+            
+            if (!name) {
+                alert('Please enter item name');
+                return;
+            }
+            
+            const itemsRef = ref(db, currentManagementType);
+            const newItemRef = push(itemsRef);
+            
+            await set(newItemRef, {
+                name: name,
+                stock: stock,
+                safetyStock: safetyStock
+            });
+            
+            document.getElementById('newItemName').value = '';
+            document.getElementById('newItemStock').value = 0;
+            document.getElementById('newItemSafety').value = 0;
+            
+            await loadItemsManagementList();
+        }
+
+        // Safety stock settings
+        async function openSafetyStockSettings() {
+            closeModal('settingsModal');
+            safetyStockChanges = {};
+            
+            // Load consumables
+            const consumablesRef = ref(db, 'consumables');
+            const consumablesSnapshot = await get(consumablesRef);
+            const consumablesData = consumablesSnapshot.val();
+            const consumablesList = document.getElementById('consumablesSafetyList');
+            consumablesList.innerHTML = '';
+            
+            if (consumablesData) {
+                Object.keys(consumablesData).forEach(key => {
+                    const item = consumablesData[key];
+                    const div = document.createElement('div');
+                    div.className = 'form-group';
+                    div.innerHTML = `
+                        <label>${item.name}</label>
+                        <input type="number" class="safety-input" data-type="consumables" data-key="${key}" value="${item.safetyStock}" min="0">
+                    `;
+                    consumablesList.appendChild(div);
+                });
+            }
+            
+            // Load supplies
+            const suppliesRef = ref(db, 'supplies');
+            const suppliesSnapshot = await get(suppliesRef);
+            const suppliesData = suppliesSnapshot.val();
+            const suppliesList = document.getElementById('suppliesSafetyList');
+            suppliesList.innerHTML = '';
+            
+            if (suppliesData) {
+                Object.keys(suppliesData).forEach(key => {
+                    const item = suppliesData[key];
+                    const div = document.createElement('div');
+                    div.className = 'form-group';
+                    div.innerHTML = `
+                        <label>${item.name}</label>
+                        <input type="number" class="safety-input" data-type="supplies" data-key="${key}" value="${item.safetyStock}" min="0">
+                    `;
+                    suppliesList.appendChild(div);
+                });
+            }
+            
+            // Add change listeners
+            document.querySelectorAll('.safety-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const type = this.dataset.type;
+                    const key = this.dataset.key;
+                    const value = parseInt(this.value);
+                    
+                    if (!safetyStockChanges[type]) {
+                        safetyStockChanges[type] = {};
+                    }
+                    safetyStockChanges[type][key] = value;
+                });
+            });
+            
+            document.getElementById('safetyStockModal').classList.add('active');
+        }
+
+        async function saveSafetyStockSettings() {
+            for (const type in safetyStockChanges) {
+                for (const key in safetyStockChanges[type]) {
+                    const itemRef = ref(db, `${type}/${key}`);
+                    await update(itemRef, { safetyStock: safetyStockChanges[type][key] });
+                }
+            }
+            
+            alert('Safety stock settings saved successfully!');
+            closeModal('safetyStockModal');
+        }
+
+        async function openPasswordSettings() {
+            closeModal('settingsModal');
+            document.getElementById('passwordManagementModal').classList.add('active');
+        }
+
+        async function savePasswords() {
+            const newAdmin = document.getElementById('newAdminPassword').value;
+            const newSupervisor = document.getElementById('newSupervisorPassword').value;
+            
+            if (!newAdmin && !newSupervisor) {
+                alert('Please enter at least one new password');
+                return;
+            }
+            
+            const passwordsRef = ref(db, 'passwords');
+            const updates = {};
+            if (newAdmin) updates.admin = newAdmin;
+            if (newSupervisor) updates.supervisor = newSupervisor;
+            
+            await update(passwordsRef, updates);
+            alert('Passwords updated successfully!');
+            closeModal('passwordManagementModal');
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('newSupervisorPassword').value = '';
+        }
+
+        // Report functions
+        async function generateReport() {
+            const startDate = document.getElementById('reportStartDate').value;
+            const endDate = document.getElementById('reportEndDate').value;
+            const reportType = document.getElementById('reportType').value;
+            
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates');
+                return;
+            }
+            
+            const transactionsRef = ref(db, 'transactions');
+            const snapshot = await get(transactionsRef);
+            const data = snapshot.val();
+            
+            if (!data) {
+                document.getElementById('reportContent').innerHTML = '<p>No transactions found.</p>';
+                return;
+            }
+            
+            const startTime = new Date(startDate).getTime();
+            const endTime = new Date(endDate).getTime() + 86400000;
+            
+            let html = '<table class="inventory-table"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Quantity</th><th>Previous Stock</th><th>New Stock</th><th>Notes</th></tr></thead><tbody>';
+            
+            Object.keys(data).forEach(key => {
+                const transaction = data[key];
+                if (transaction.timestamp >= startTime && transaction.timestamp < endTime) {
+                    if (reportType === 'all' || 
+                        (reportType === 'consumables' && transaction.itemType === 'consumables') ||
+                        (reportType === 'supplies' && transaction.itemType === 'supplies')) {
+                        
+                        const date = new Date(transaction.timestamp).toLocaleDateString();
+                        const typeLabel = transaction.type === 'in' ? 'Stock In' : 'Stock Out';
+                        
+                        html += `<tr>
+                            <td>${date}</td>
+                            <td>${transaction.itemName}</td>
+                            <td>${typeLabel}</td>
+                            <td>${transaction.quantity}</td>
+                            <td>${transaction.previousStock}</td>
+                            <td>${transaction.newStock}</td>
+                            <td>${transaction.notes || '-'}</td>
+                        </tr>`;
+                    }
+                }
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        function exportToExcel() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML || reportContent.innerHTML.includes('No transactions')) {
+                alert('Please generate a report first');
+                return;
+            }
+            
+            const table = reportContent.querySelector('table');
+            let csv = '';
+            
+            const headers = table.querySelectorAll('thead th');
+            headers.forEach((header, index) => {
+                csv += header.textContent;
+                if (index < headers.length - 1) csv += ',';
+            });
+            csv += '\n';
+            
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach((cell, index) => {
+                    csv += '"' + cell.textContent + '"';
+                    if (index < cells.length - 1) csv += ',';
+                });
+                csv += '\n';
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'inventory_report.csv';
+            a.click();
+        }
+
+        function printReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent.innerHTML || reportContent.innerHTML.includes('No transactions')) {
+                alert('Please generate a report first');
+                return;
+            }
+            
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>Inventory Report</title>');
+            printWindow.document.write('<style>table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#3498db;color:white;}</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h1>ITAC Cleaning Management - Inventory Report</h1>');
+            printWindow.document.write(reportContent.innerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Event listeners
+        document.getElementById('newRequestBtn').addEventListener('click', openRequestModal);
+        document.getElementById('cancelRequestBtn').addEventListener('click', () => closeModal('requestModal'));
+        document.getElementById('submitRequestBtn').addEventListener('click', submitRequest);
+        
+        document.getElementById('cancelPasswordBtn').addEventListener('click', () => {
+            closeModal('passwordModal');
+            currentRequestKey = null; // Ensure key is cleared on cancel
+            document.getElementById('passwordInput').value = '';
+        });
+        document.getElementById('submitPasswordBtn').addEventListener('click', verifyPassword);
+        
+        document.getElementById('cancelInventoryBtn').addEventListener('click', () => closeModal('inventoryModal'));
+        document.getElementById('submitInventoryBtn').addEventListener('click', submitInventoryTransaction);
+        
+        document.getElementById('settingsBtn').addEventListener('click', openSettingsMenu);
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => closeModal('settingsModal'));
+        
+        document.getElementById('scheduleSettingsBtn').addEventListener('click', openScheduleSettings);
+        document.getElementById('cancelScheduleBtn').addEventListener('click', () => closeModal('scheduleSettingsModal'));
+        document.getElementById('saveScheduleBtn').addEventListener('click', saveScheduleSettings);
+        
+        document.getElementById('consumablesSettingsBtn').addEventListener('click', () => openItemsManagement('consumables'));
+        document.getElementById('suppliesSettingsBtn').addEventListener('click', () => openItemsManagement('supplies'));
+        document.getElementById('closeItemsManagementBtn').addEventListener('click', () => closeModal('itemsManagementModal'));
+        document.getElementById('addItemBtn').addEventListener('click', addNewItem);
+        
+        document.getElementById('safetyStockSettingsBtn').addEventListener('click', openSafetyStockSettings);
+        document.getElementById('cancelSafetyStockBtn').addEventListener('click', () => closeModal('safetyStockModal'));
+        document.getElementById('saveSafetyStockBtn').addEventListener('click', saveSafetyStockSettings);
+        
+        document.getElementById('passwordSettingsBtn').addEventListener('click', openPasswordSettings);
+        document.getElementById('cancelPasswordManagementBtn').addEventListener('click', () => closeModal('passwordManagementModal'));
+        document.getElementById('savePasswordsBtn').addEventListener('click', savePasswords);
+        
+        document.getElementById('closeFullImageBtn').addEventListener('click', () => closeModal('fullImageModal'));
+        
+        document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+        document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+        document.getElementById('printReportBtn').addEventListener('click', printReport);
+        
+        // Initialize app
+        initializeData().then(() => {
+            loadSchedule();
+            loadRequests();
+            loadInventory('consumables', 'consumablesTable', 'consumablesAlerts');
+            loadInventory('supplies', 'suppliesTable', 'suppliesAlerts');
+        });
+    </script>
 </body>
 </html>
