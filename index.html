@@ -685,6 +685,13 @@
         </div>
     </div>
 
+    <div class="modal" id="waitingModal">
+        <div class="modal-content" style="text-align: center; padding: 50px;">
+            <h2>Processing Request...</h2>
+            <p style="margin-top: 15px;">Please wait while the request is being processed.</p>
+        </div>
+    </div>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, get, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -711,6 +718,15 @@
         let currentManagementType = null;
         let safetyStockChanges = {};
         let pendingCompleteRequestKey = null; // For the completion flow
+
+        // NEW: Waiting modal functions
+        function showWaiting() {
+            document.getElementById('waitingModal').classList.add('active');
+        }
+
+        function hideWaiting() {
+            document.getElementById('waitingModal').classList.remove('active');
+        }
 
         // Initialize default data
         async function initializeData() {
@@ -784,7 +800,7 @@
                     document.getElementById('thu-schedule').textContent = data.thu || 'No schedule';
                     document.getElementById('fri-schedule').textContent = data.fri || 'No schedule';
                     document.getElementById('sat-schedule').textContent = data.sat || 'No schedule';
-                    document.getElementById('sun-schedule').textContent = data.sun || 'No schedule';
+                    document.getElementById('sun-schedule').textContent = data.sun || 'Rest day';
                 }
             });
         }
@@ -1062,26 +1078,34 @@
         });
 
 
-        // Submit request
+        // Submit request (MODIFIED to include waiting modal)
         async function submitRequest() {
-            const message = document.getElementById('requestMessage').value.trim();
-            
-            if (!message) {
-                console.warn('Request submitted without message.');
+            showWaiting(); // Show waiting modal
+            try {
+                const message = document.getElementById('requestMessage').value.trim();
+                
+                if (!message) {
+                    console.warn('Request submitted without message.');
+                }
+                
+                const requestsRef = ref(db, 'requests');
+                const newRequestRef = push(requestsRef);
+                
+                await set(newRequestRef, {
+                    message: message,
+                    images: requestImages,
+                    status: 'pending',
+                    timestamp: Date.now()
+                });
+                
+                alert('Request submitted successfully!');
+                closeModal('requestModal'); // Close modal after successful submission
+            } catch (error) {
+                console.error("Error submitting request:", error);
+                alert('Error submitting request. Please try again.');
+            } finally {
+                hideWaiting(); // Hide waiting modal
             }
-            
-            const requestsRef = ref(db, 'requests');
-            const newRequestRef = push(requestsRef);
-            
-            await set(newRequestRef, {
-                message: message,
-                images: requestImages,
-                status: 'pending',
-                timestamp: Date.now()
-            });
-            
-            alert('Request submitted successfully!');
-            closeModal('requestModal'); // Close modal after successful submission
         }
 
         // Approve request
@@ -1101,21 +1125,39 @@
             document.getElementById('completeRequestMemo').value = ''; // Clear memo
         }
         
-        // Submit Complete Request
+        // Submit Complete Request (MODIFIED to include waiting modal)
         document.getElementById('submitCompleteRequestBtn').addEventListener('click', async function() {
-            if (!pendingCompleteRequestKey) {
-                alert('Error: No request selected for completion.');
-                closeModal('completeRequestModal');
-                return;
-            }
-            
-            const memo = document.getElementById('completeRequestMemo').value; // Get memo
-            const images = completedRequestImages; // Use the globally managed array (DataURL format)
+            showWaiting(); // Show waiting modal
+            try {
+                if (!pendingCompleteRequestKey) {
+                    alert('Error: No request selected for completion.');
+                    closeModal('completeRequestModal');
+                    return;
+                }
+                
+                const memo = document.getElementById('completeRequestMemo').value; // Get memo
+                const images = completedRequestImages; // Use the globally managed array (DataURL format)
 
-            await completeRequest(pendingCompleteRequestKey, images, memo); // Pass images and memo
-            
-            closeModal('completeRequestModal');
-            pendingCompleteRequestKey = null;
+                // Call the actual completion function
+                const requestRef = ref(db, `requests/${pendingCompleteRequestKey}`);
+                await update(requestRef, {
+                    status: 'completed',
+                    completedImages: images,
+                    completedMemo: memo,
+                    completedTimestamp: Date.now()
+                });
+
+                alert('Request marked as completed!');
+                
+                closeModal('completeRequestModal');
+                pendingCompleteRequestKey = null;
+
+            } catch (error) {
+                console.error("Error completing request:", error);
+                alert('Error marking request as completed. Please try again.');
+            } finally {
+                hideWaiting(); // Hide waiting modal
+            }
         });
         
         document.getElementById('cancelCompleteRequestBtn').addEventListener('click', () => {
@@ -1124,19 +1166,6 @@
         });
 
 
-        // Complete request
-        async function completeRequest(key, completedImages, completedMemo) {
-            const requestRef = ref(db, `requests/${key}`);
-            await update(requestRef, {
-                status: 'completed',
-                completedImages: completedImages,
-                completedMemo: completedMemo, // Save memo
-                completedTimestamp: Date.now()
-            });
-            
-            alert('Request marked as completed!');
-        }
-        
         // Delete request
         async function deleteRequest(key) {
             if (confirm('Are you absolutely sure you want to permanently delete this request? This action cannot be undone.')) {
