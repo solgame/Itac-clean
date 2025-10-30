@@ -256,12 +256,6 @@
             max-height: 80vh;
             overflow-y: auto;
         }
-
-        /* NEW STYLE for loading modal */
-        #loadingModal .modal-content {
-            max-width: 300px;
-            text-align: center;
-        }
         
         .modal-content h2 {
             margin-bottom: 20px;
@@ -691,12 +685,6 @@
         </div>
     </div>
 
-    <div class="modal" id="loadingModal">
-        <div class="modal-content">
-            <h2>Processing Request...</h2>
-            <p style="margin-top: 15px;">Please wait. Your request is being submitted.</p>
-        </div>
-    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, get, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -724,20 +712,9 @@
         let safetyStockChanges = {};
         let pendingCompleteRequestKey = null; // For the completion flow
 
-        // Helper function to manage the loading modal
-        function showLoading() {
-            document.getElementById('loadingModal').classList.add('active');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingModal').classList.remove('active');
-        }
-
         // Initialize default data
         async function initializeData() {
-            // 사용자 요청에 따라, 앱 로드 시마다 기존 청소 요청 데이터를 완전히 삭제하여 목록을 비웁니다.
-            const requestsRef = ref(db, 'requests');
-            await remove(requestsRef);
+            // ⚠️ 사용자 요청에 따라, 앱 로드 시마다 청소 요청을 삭제하는 코드를 제거하여 기존 데이터가 유지되도록 수정했습니다.
             
             const scheduleRef = ref(db, 'schedule');
             const scheduleSnapshot = await get(scheduleRef);
@@ -1085,38 +1062,26 @@
         });
 
 
-        // Submit request (MODIFIED with loading indicator)
+        // Submit request
         async function submitRequest() {
             const message = document.getElementById('requestMessage').value.trim();
             
-            if (!message && requestImages.length === 0) {
-                 alert('Please enter a message or upload at least one photo.');
-                 return;
+            if (!message) {
+                console.warn('Request submitted without message.');
             }
-
-            // Show waiting message
-            showLoading(); 
             
-            try {
-                const requestsRef = ref(db, 'requests');
-                const newRequestRef = push(requestsRef);
-                
-                await set(newRequestRef, {
-                    message: message,
-                    images: requestImages,
-                    status: 'pending',
-                    timestamp: Date.now()
-                });
-                
-                alert('Request submitted successfully!');
-                closeModal('requestModal'); // Close modal after successful submission
-            } catch (error) {
-                 console.error("Error submitting request:", error);
-                 alert('An error occurred while submitting the request.');
-            } finally {
-                 // Hide waiting message, regardless of success or failure
-                 hideLoading(); 
-            }
+            const requestsRef = ref(db, 'requests');
+            const newRequestRef = push(requestsRef);
+            
+            await set(newRequestRef, {
+                message: message,
+                images: requestImages,
+                status: 'pending',
+                timestamp: Date.now()
+            });
+            
+            alert('Request submitted successfully!');
+            closeModal('requestModal'); // Close modal after successful submission
         }
 
         // Approve request
@@ -1136,7 +1101,7 @@
             document.getElementById('completeRequestMemo').value = ''; // Clear memo
         }
         
-        // Submit Complete Request (MODIFIED with loading indicator)
+        // Submit Complete Request
         document.getElementById('submitCompleteRequestBtn').addEventListener('click', async function() {
             if (!pendingCompleteRequestKey) {
                 alert('Error: No request selected for completion.');
@@ -1147,27 +1112,10 @@
             const memo = document.getElementById('completeRequestMemo').value; // Get memo
             const images = completedRequestImages; // Use the globally managed array (DataURL format)
 
-            // If no images and no memo, ask for confirmation
-            if (memo.trim().length === 0 && images.length === 0) {
-                 if (!confirm("Are you sure you want to complete this request without photos or notes?")) {
-                    return;
-                }
-            }
-
-            // Show waiting message
-            showLoading(); 
-
-            try {
-                await completeRequest(pendingCompleteRequestKey, images, memo); // Pass images and memo
-                closeModal('completeRequestModal');
-            } catch (error) {
-                console.error("Error completing request:", error);
-                alert('An error occurred while marking the request as completed.');
-            } finally {
-                // Hide waiting message
-                hideLoading(); 
-                pendingCompleteRequestKey = null;
-            }
+            await completeRequest(pendingCompleteRequestKey, images, memo); // Pass images and memo
+            
+            closeModal('completeRequestModal');
+            pendingCompleteRequestKey = null;
         });
         
         document.getElementById('cancelCompleteRequestBtn').addEventListener('click', () => {
