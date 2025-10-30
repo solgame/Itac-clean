@@ -75,7 +75,7 @@
 
             <div class="flex justify-end space-x-3">
                 <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition" onclick="closeIOModal()">취소</button>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" onclick="performInventoryAction()">저장</button>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" onclick="executeInventoryLog()">저장</button>
             </div>
         </div>
     </div>
@@ -397,32 +397,47 @@
                 window.isSupervisor = (password === passwords.supervisor);
             }
 
-            closePasswordModal(); // 이 함수는 비밀번호 모달을 닫고, 실패 시 IO 모달도 닫습니다.
+            // 1. 비밀번호 모달 UI 닫기
+            document.getElementById('password-modal').classList.remove('flex');
+            document.getElementById('password-modal').classList.add('hidden');
 
             if (success && typeof storedCallback === 'function') { // 저장된 콜백이 함수인지 확인 후 실행
-                // 성공 시 콜백(executeInventoryLog)이 IO 모달을 닫는 로직을 가지고 있으므로,
-                // 여기서는 추가적인 모달 닫기 로직이 필요 없습니다. (closePasswordModal에서 이미 처리됨)
+                
+                // 2. 성공 시 콜백 실행 (예: openIOModalAfterPasswordSuccess)
                 storedCallback();
                 window.showMessage('비밀번호가 성공적으로 확인되었습니다!', 'success');
+                
             } else if (!success) {
-                // 실패 시, closePasswordModal이 이미 IO 모달을 닫았으므로, 사용자에게 에러만 보여줍니다.
-                window.showMessage('비밀번호가 일치하지 않습니다.', 'error');
+                // 2. 실패 시: IO 모달은 열리지 않았으므로, 재고 작업 Context를 정리하고 사용자에게 에러를 보여줍니다.
+                if (window.state.passwordRole === 'supervisor' && window.state.inventoryActionContext) {
+                    window.state.inventoryActionContext = null;
+                    window.showMessage('비밀번호가 일치하지 않아 재고 입력이 취소되었습니다.', 'error');
+                } else {
+                    window.showMessage('비밀번호가 일치하지 않습니다.', 'error');
+                }
             }
+            
+            // 3. 비밀번호 관련 상태 초기화
+            window.state.passwordCallback = null;
+            window.state.passwordRole = null;
+            window.isAdmin = false;
+            window.isSupervisor = false;
         };
 
         /**
          * [FINAL FIX FOR UX FLOW]
-         * 비밀번호 모달이 닫힐 때, InventoryActionContext가 있다면 
-         * IO 모달도 자동으로 닫아서 사용자에게 반복적인 취소 과정을 강요하지 않도록 수정합니다.
+         * 비밀번호 모달이 닫힐 때, 실패/취소 상황이면 재고 입력 모달이 열리는 것을 막기 위해 Context를 정리합니다.
+         * IO 모달은 아직 열리지 않았으므로, IO 모달을 닫는 로직은 필요 없습니다.
          */
         window.closePasswordModal = () => {
-            // Inventory 모달로 인해 비밀번호 모달이 열렸는지 확인
-            if (window.state.inventoryActionContext) {
-                // IO 모달도 자동으로 닫습니다. (실패/취소 시 메인 화면으로 돌아가도록)
-                // 성공 시에는 executeInventoryLog에서 다시 닫지만, 이는 안전하고 흐름을 단순화합니다.
-                window.closeIOModal(); 
+            
+            // 사용자가 비밀번호 모달에서 '취소'를 눌렀을 때, 재고 작업 Context를 정리하고 취소 메시지 표시
+            if (window.state.passwordRole === 'supervisor' && window.state.inventoryActionContext) {
+                window.state.inventoryActionContext = null;
+                window.showMessage('재고 입력이 취소되었습니다. (비밀번호 확인 취소)', 'info');
             }
             
+            // 비밀번호 모달 닫기 및 상태 초기화
             document.getElementById('password-modal').classList.remove('flex');
             document.getElementById('password-modal').classList.add('hidden');
             window.state.passwordCallback = null;
@@ -958,14 +973,26 @@
         };
 
         /**
-         * Opens the Inventory In/Out Modal. (Localized to English)
+         * [수정] Inventory In/Out Modal을 열기 전에 비밀번호를 확인하도록 로직을 변경합니다.
          */
         window.openIOModal = (itemId, itemName) => {
-            // Inventory 작업 시작 시 context 설정
+            // 1. Inventory 작업 시작 시 context 설정 (아이템 정보 저장)
             window.state.inventoryActionContext = { itemId, itemName };
             
-            document.getElementById('io-modal-title').textContent = `${itemName} 입/출고`;
-            document.getElementById('io-item-name').textContent = itemName;
+            // 2. IO 모달을 열지 않고, 바로 비밀번호 확인을 요청합니다.
+            // 성공 시 콜백(openIOModalAfterPasswordSuccess)이 IO 모달을 엽니다.
+            window.checkPassword('supervisor', window.openIOModalAfterPasswordSuccess);
+        };
+        
+        /**
+         * [신규] 비밀번호 확인에 성공한 후, Inventory In/Out Modal을 엽니다.
+         */
+        window.openIOModalAfterPasswordSuccess = () => {
+            const context = window.state.inventoryActionContext;
+            if (!context) return;
+            
+            document.getElementById('io-modal-title').textContent = `${context.itemName} 입/출고`;
+            document.getElementById('io-item-name').textContent = context.itemName;
             document.getElementById('io-quantity').value = 1;
             document.getElementById('io-memo').value = '';
 
@@ -979,7 +1006,7 @@
             document.getElementById('io-memo').placeholder = '간단한 메모';
             document.querySelector('#io-modal button:last-child').textContent = '저장';
             document.querySelector('#io-modal button:first-child').textContent = '취소';
-            document.querySelector('#io-modal p.text-gray-600').innerHTML = `현재 항목: <span id="io-item-name" class="font-semibold text-blue-600">${itemName}</span>`;
+            document.querySelector('#io-modal p.text-gray-600').innerHTML = `현재 항목: <span id="io-item-name" class="font-semibold text-blue-600">${context.itemName}</span>`;
 
 
             const modal = document.getElementById('io-modal');
@@ -995,16 +1022,16 @@
         };
 
         /**
-         * Performs the actual inventory log action after password check (Supervisor/Admin only).
+         * Performs the actual inventory log action (called directly by the IO modal's '저장' button).
+         * 비밀번호는 이미 확인되었으므로 바로 로직을 수행합니다.
          */
-        window.performInventoryAction = () => {
-            // 재고 입력 모달이 열린 상태에서 비밀번호 확인 요청
-            window.checkPassword('supervisor', executeInventoryLog);
-        };
-
         window.executeInventoryLog = async () => {
             const context = window.state.inventoryActionContext;
-            if (!context) return;
+            if (!context) {
+                window.showMessage('재고 항목 정보가 유효하지 않습니다.', 'error');
+                closeIOModal();
+                return;
+            }
 
             const type = document.getElementById('io-type').value;
             const quantity = parseInt(document.getElementById('io-quantity').value);
@@ -1012,9 +1039,18 @@
 
             if (isNaN(quantity) || quantity <= 0) {
                 window.showMessage('유효한 수량을 입력해 주세요.', 'error');
-                // IO 모달은 닫지 않고 사용자에게 재입력 기회를 줍니다. (단, 비밀번호 모달은 이미 닫힘)
                 return;
             }
+            
+            // 출고 시 재고 확인 (간단한 클라이언트 측 검증)
+            if (type === 'out') {
+                const currentStock = window.state.inventory[context.itemId] || 0;
+                if (quantity > currentStock) {
+                    window.showMessage(`현재 재고(${currentStock})보다 많은 수량(${quantity})을 출고할 수 없습니다.`, 'error');
+                    return;
+                }
+            }
+
 
             try {
                 const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
@@ -1029,14 +1065,11 @@
                 });
 
                 window.showMessage(`${context.itemName} ${type === 'in' ? '입고' : '출고'} ${quantity}개가 성공적으로 기록되었습니다.`, 'success');
-                // 성공 시 closePasswordModal()에서 이미 닫았을 가능성이 높지만, 
-                // 안전을 위해 다시 호출하여 context를 해제합니다.
                 closeIOModal(); 
 
             } catch (error) {
                 console.error("Error recording inventory log:", error);
                 window.showMessage(`재고 기록 오류: ${error.message}`, 'error');
-                // 오류 시 IO 모달은 닫지 않고 사용자에게 오류를 알리고 재입력을 유도합니다.
             }
         };
         
