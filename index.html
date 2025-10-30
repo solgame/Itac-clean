@@ -661,8 +661,14 @@
             <h2>Complete Cleaning Request</h2>
             <p>Upload photos of the completed work (Max 5).</p>
             <div class="form-group">
-                <label>Completed Work Photos</label>
-                <input type="file" id="completeRequestImages" accept="image/*" multiple>
+                <label>Upload Completed Work Photos (Max 5)</label>
+                <button class="btn" id="addCompletedImagesBtn">+ Add Photos</button>
+                <input type="file" id="completeRequestImagesInput" accept="image/*" multiple style="display:none;">
+                <div class="image-preview" id="completedImagePreview"></div>
+            </div>
+            <div class="form-group">
+                <label>Notes on Completed Work (Optional)</label>
+                <textarea id="completeRequestMemo" placeholder="Add notes about the completed work..."></textarea>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-danger" id="cancelCompleteRequestBtn">Cancel</button>
@@ -693,6 +699,7 @@
         let currentAction = null;
         let currentRequestKey = null;
         let requestImages = [];
+        let completedRequestImages = []; // NEW: Array for completed work images
         let currentManagementType = null;
         let safetyStockChanges = {};
         let pendingCompleteRequestKey = null; // For the completion flow
@@ -776,7 +783,7 @@
             });
         }
 
-        // Load cleaning requests - MODIFIED to only show message if not empty
+        // Load cleaning requests
         function loadRequests() {
             const requestsRef = ref(db, 'requests');
             onValue(requestsRef, (snapshot) => {
@@ -821,8 +828,13 @@
                             html += `<button class="btn btn-warning" data-action="complete" data-key="${key}">Complete Work</button>`;
                         }
                         
-                        // Completed Work Images
+                        // Completed Work (MODIFIED to show memo)
                         if (request.status === 'completed') {
+                            // Display completed memo if it exists
+                            if (request.completedMemo && request.completedMemo.trim().length > 0) {
+                                html += `<p style="margin-top: 10px;"><strong>Completed Note:</strong> ${request.completedMemo}</p>`;
+                            }
+
                             if (request.completedImages && request.completedImages.length > 0) {
                                 html += '<div style="margin-top: 15px;"><strong>Completed Work:</strong><div class="image-preview">';
                                 request.completedImages.forEach(img => {
@@ -942,7 +954,7 @@
             document.getElementById('fullImageModal').classList.add('active');
         }
 
-        // Update image preview with remove buttons
+        // Update image preview with remove buttons (for New Request)
         function updateImagePreview() {
             const preview = document.getElementById('requestImagePreview');
             preview.innerHTML = '';
@@ -950,10 +962,6 @@
             requestImages.forEach((img, index) => {
                 const div = document.createElement('div');
                 div.className = 'image-preview-item';
-                // Note: The onclick in HTML will not work directly due to the script being a module, 
-                // but the event listeners below handle it on the request item rendering. For the modal preview, 
-                // we'll rely on the manual event listener attached after the element is appended, 
-                // or just keep the visual representation.
                 div.innerHTML = `
                     <img src="${img}" data-img="${img}">
                     <div class="remove-btn" data-index="${index}">×</div>
@@ -974,6 +982,36 @@
                 });
             });
         }
+
+        // Update image preview with remove buttons (for Completed Request) - NEW
+        function updateCompletedImagePreview() {
+            const preview = document.getElementById('completedImagePreview');
+            preview.innerHTML = '';
+            
+            completedRequestImages.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = 'image-preview-item';
+                div.innerHTML = `
+                    <img src="${img}" data-img="${img}">
+                    <div class="remove-btn" data-index="${index}">×</div>
+                `;
+                preview.appendChild(div);
+                
+                // Add click listener to image for full preview
+                div.querySelector('img').addEventListener('click', () => showFullImage(img));
+            });
+            
+            // Add remove button listeners
+            preview.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const index = parseInt(this.dataset.index);
+                    completedRequestImages.splice(index, 1);
+                    updateCompletedImagePreview();
+                });
+            });
+        }
+
 
         // Request image handling
         document.getElementById('addMoreImagesBtn').addEventListener('click', function() {
@@ -1010,15 +1048,49 @@
             // Reset input
             e.target.value = '';
         });
+        
+        // Completed Request image handling - NEW
+        document.getElementById('addCompletedImagesBtn').addEventListener('click', function() {
+            if (completedRequestImages.length >= 5) {
+                alert('Maximum 5 images allowed');
+                return;
+            }
+            document.getElementById('completeRequestImagesInput').click(); 
+        });
+
+        document.getElementById('completeRequestImagesInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const remaining = 5 - completedRequestImages.length;
+            
+            if (files.length > remaining) {
+                alert(`You can only add ${remaining} more image(s)`);
+            }
+            
+            const filesToAdd = files.slice(0, remaining);
+            
+            let processed = 0;
+            filesToAdd.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    completedRequestImages.push(event.target.result);
+                    processed++;
+                    if (processed === filesToAdd.length) {
+                        updateCompletedImagePreview();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Reset input
+            e.target.value = '';
+        });
+
 
         // Submit request - MODIFIED
         async function submitRequest() {
             const message = document.getElementById('requestMessage').value.trim();
             
             if (!message) {
-                // 메시지가 필수는 아니지만, 기본적으로는 요청 메시지를 입력하도록 안내합니다.
-                // 이전 요청에서 사용자가 내용을 입력하지 않고 Submit하면 빈 메시지가 저장될 수 있습니다.
-                // 여기서는 "아무나 할 수 있다"는 요청에 따라 필수로 처리하지 않습니다.
                 console.warn('Request submitted without message.');
             }
             
@@ -1044,13 +1116,16 @@
             currentRequestKey = null; // Clear key
         }
         
-        // Open Complete Request Modal - NEW
+        // Open Complete Request Modal - MODIFIED
         function openCompleteRequestModal() {
             document.getElementById('completeRequestModal').classList.add('active');
-            document.getElementById('completeRequestImages').value = ''; // Reset file input
+            // Reset state
+            completedRequestImages = [];
+            updateCompletedImagePreview();
+            document.getElementById('completeRequestMemo').value = ''; // Clear memo
         }
         
-        // Submit Complete Request - NEW
+        // Submit Complete Request - MODIFIED
         document.getElementById('submitCompleteRequestBtn').addEventListener('click', async function() {
             if (!pendingCompleteRequestKey) {
                 alert('Error: No request selected for completion.');
@@ -1058,21 +1133,10 @@
                 return;
             }
             
-            const fileInput = document.getElementById('completeRequestImages');
-            const files = Array.from(fileInput.files).slice(0, 5);
-            
-            const completedImages = [];
-            
-            for (const file of files) {
-                const reader = new FileReader();
-                const dataUrl = await new Promise((resolve) => {
-                    reader.onload = (event) => resolve(event.target.result);
-                    reader.readAsDataURL(file);
-                });
-                completedImages.push(dataUrl);
-            }
-            
-            await completeRequest(pendingCompleteRequestKey, completedImages);
+            const memo = document.getElementById('completeRequestMemo').value; // Get memo
+            const images = completedRequestImages; // Use the globally managed array (DataURL format)
+
+            await completeRequest(pendingCompleteRequestKey, images, memo); // Pass images and memo
             
             closeModal('completeRequestModal');
             pendingCompleteRequestKey = null;
@@ -1084,12 +1148,13 @@
         });
 
 
-        // Complete request - MODIFIED (Removed password check)
-        async function completeRequest(key, completedImages) {
+        // Complete request - MODIFIED (to accept memo)
+        async function completeRequest(key, completedImages, completedMemo) {
             const requestRef = ref(db, `requests/${key}`);
             await update(requestRef, {
                 status: 'completed',
                 completedImages: completedImages,
+                completedMemo: completedMemo, // Save memo
                 completedTimestamp: Date.now()
             });
             
