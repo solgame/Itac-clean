@@ -1,1297 +1,1035 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITAC 청소관리</title>
+    <title>ITAC Cleaning Management</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Use Inter font -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Noto+Sans+KR:wght@100..900&display=swap');
-        body { font-family: 'Noto Sans KR', 'Inter', sans-serif; }
-        .tab-button {
-            transition: all 0.2s;
-        }
-        .tab-button.active {
-            border-bottom: 4px solid #3b82f6;
-            color: #3b82f6;
-            font-weight: 700;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="text-center py-6 bg-white shadow-lg rounded-xl mb-6">
-            <h1 class="text-4xl font-extrabold text-blue-700 tracking-tight">ITAC 청소 관리 시스템</h1>
-            <p id="auth-status" class="mt-2 text-sm text-gray-500">
-                <span id="loading-spinner" class="inline-block animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent mr-2"></span>
-                초기화 중...
-            </p>
+
+    <!-- Main Application Container -->
+    <div id="app" class="max-w-4xl mx-auto p-4 md:p-8">
+        <header class="text-center mb-8 border-b pb-4">
+            <h1 class="text-4xl font-extrabold text-blue-700">ITAC Cleaning Management</h1>
+            <p class="text-gray-500 mt-1">Real-time Operations Dashboard</p>
         </header>
 
-        <nav class="flex justify-center bg-white p-2 rounded-xl shadow-md mb-6 sticky top-0 z-10">
-            <button class="tab-button active px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('home')">메인</button>
-            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('requests')">청소 요청</button>
-            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('reports')">재고 보고서</button>
-            <button class="tab-button px-4 py-2 mx-2 text-lg text-gray-600 hover:text-blue-500" onclick="changeView('settings')">설정</button>
-        </nav>
+        <!-- Main Content Area -->
+        <main id="main-content">
+            
+            <!-- Weekly Schedule Display -->
+            <section id="weekly-schedule" class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Weekly & Special Cleaning Plan</h2>
+                <div id="schedule-display" class="space-y-1 text-sm text-gray-700 min-h-[10rem] max-h-64 overflow-y-auto">
+                    <!-- Schedule items will be dynamically loaded here -->
+                    <p class="text-gray-400 italic">Loading schedule...</p>
+                </div>
+            </section>
 
-        <main id="main-content" class="min-h-[500px]">
-            </main>
-    </div>
+            <!-- Cleaning Request Section -->
+            <section id="cleaning-requests" class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex justify-between items-center">
+                    Cleaning Requests
+                    <button onclick="showRequestForm()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150 shadow-md text-sm">
+                        Submit New Request
+                    </button>
+                </h2>
+                <div id="requests-list" class="space-y-4">
+                    <!-- Request items will be dynamically loaded here -->
+                    <p class="text-gray-400 italic">No cleaning requests found.</p>
+                </div>
+            </section>
 
-    <div id="password-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[1000] hidden items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm transform transition-all scale-100 duration-300">
-            <h3 class="text-xl font-bold mb-4 text-gray-800" id="modal-title">비밀번호 확인</h3>
-            <p class="text-sm text-gray-600 mb-4" id="modal-role-info">액션을 진행하려면 비밀번호를 입력하세요.</p>
-            <input type="password" id="password-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4" placeholder="비밀번호 입력">
-            <div class="flex justify-end space-x-3">
-                <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition" onclick="closePasswordModal()">취소</button>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" onclick="submitPassword()">확인</button>
-            </div>
-        </div>
-    </div>
+            <!-- Consumables Inventory Management -->
+            <section id="consumables-inventory" class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Consumables Inventory</h2>
+                <div id="consumables-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Consumables will be dynamically loaded here -->
+                </div>
+            </section>
 
-    <div id="io-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg transform transition-all scale-100 duration-300">
-            <h3 class="text-2xl font-bold mb-4 text-gray-800" id="io-modal-title">재고 입/출고</h3>
-            <p class="text-gray-600 mb-4">현재 항목: <span id="io-item-name" class="font-semibold text-blue-600"></span></p>
+            <!-- Chemicals Inventory Management -->
+            <section id="chemicals-inventory" class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Chemicals Inventory</h2>
+                <div id="chemicals-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Chemicals will be dynamically loaded here -->
+                </div>
+            </section>
 
-            <div class="mb-4">
-                <label for="io-type" class="block text-sm font-medium text-gray-700 mb-1">구분</label>
-                <select id="io-type" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                    <option value="in">입고</option>
-                    <option value="out">출고</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="io-quantity" class="block text-sm font-medium text-gray-700 mb-1">수량</label>
-                <input type="number" id="io-quantity" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="수량 입력" min="1">
-            </div>
-            <div class="mb-6">
-                <label for="io-memo" class="block text-sm font-medium text-gray-700 mb-1">메모 (선택)</label>
-                <input type="text" id="io-memo" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="간단한 메모">
-            </div>
+            <!-- Reports Section -->
+            <section id="reports-section" class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Inventory Transaction Reports</h2>
+                <div class="flex space-x-4 mb-4">
+                    <input type="date" id="report-start-date" class="border p-2 rounded-lg">
+                    <input type="date" id="report-end-date" class="border p-2 rounded-lg">
+                    <button onclick="generateReport()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
+                        Generate Report
+                    </button>
+                </div>
+                <div id="report-output" class="max-h-96 overflow-y-auto border rounded-lg p-2 mb-4">
+                    <p class="text-sm text-gray-500 italic">Select a date range and click 'Generate Report'.</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="printReport()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition duration-150 shadow-md">
+                        Print Report
+                    </button>
+                    <button onclick="exportToExcel()" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-150 shadow-md">
+                        Export to Excel
+                    </button>
+                </div>
+            </section>
 
-            <div class="flex justify-end space-x-3">
-                <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition" onclick="closeIOModal()">취소</button>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition" onclick="executeInventoryLog()">저장</button>
-            </div>
-        </div>
+        </main>
+
+        <!-- Footer/Settings Button -->
+        <footer class="text-center py-4 border-t mt-8">
+            <button onclick="showSettingsModal()" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-full shadow-lg hover:bg-indigo-700 transition duration-200">
+                Settings
+            </button>
+        </footer>
     </div>
     
-    <div id="message-box" class="fixed bottom-4 right-4 z-50"></div>
+    <!-- Modals Container -->
+    <div id="modals-container">
+        
+        <!-- Generic Password Modal -->
+        <div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md">
+                <h3 class="text-xl font-bold mb-4" id="password-modal-title">Access Required</h3>
+                <p class="mb-4 text-gray-600">Please enter Administrator or Supervisor password to proceed.</p>
+                <input type="password" id="auth-password-input" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-blue-500 focus:border-blue-500" placeholder="Password">
+                <p id="auth-error-message" class="text-red-500 mb-4 hidden">Invalid password. Please try again.</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="hidePasswordModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
+                    <button id="auth-confirm-button" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Confirm</button>
+                </div>
+            </div>
+        </div>
 
+        <!-- Settings Modal (Admin Only) -->
+        <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
+            <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <h3 class="text-2xl font-bold mb-6 text-indigo-700">Application Settings</h3>
+                <div id="settings-content" class="space-y-6">
+                    
+                    <!-- Weekly Schedule Management -->
+                    <div class="border-b pb-4">
+                        <h4 class="text-xl font-semibold mb-3">Weekly Cleaning Plan</h4>
+                        <textarea id="weekly-plan-input" rows="10" class="w-full p-3 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Enter up to 10 lines of the weekly schedule (e.g., Monday: Deep clean floors)"></textarea>
+                        <button onclick="saveWeeklyPlan()" class="mt-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Save Plan</button>
+                    </div>
+
+                    <!-- Inventory Management (Consumables & Chemicals) -->
+                    <div class="border-b pb-4">
+                        <h4 class="text-xl font-semibold mb-3">Inventory Item Management</h4>
+                        <div class="space-y-4">
+                            <!-- Consumables -->
+                            <h5 class="font-medium text-lg mt-2 text-gray-700">Consumables</h5>
+                            <div id="settings-consumables-list" class="space-y-2"></div>
+                            <input type="text" id="new-consumable-name" class="p-2 border rounded-lg" placeholder="New Consumable Name">
+                            <button onclick="addItem('consumable')" class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Add Consumable</button>
+                            
+                            <!-- Chemicals -->
+                            <h5 class="font-medium text-lg mt-4 text-gray-700">Chemicals</h5>
+                            <div id="settings-chemicals-list" class="space-y-2"></div>
+                            <input type="text" id="new-chemical-name" class="p-2 border rounded-lg" placeholder="New Chemical Name">
+                            <button onclick="addItem('chemical')" class="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Add Chemical</button>
+                        </div>
+                    </div>
+
+                    <!-- Safety Stock Management -->
+                    <div class="border-b pb-4">
+                        <h4 class="text-xl font-semibold mb-3">Safety Stock & Reorder Quantity</h4>
+                        <div id="settings-safety-stock-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Safety Stock inputs will be dynamically loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Password Management -->
+                    <div>
+                        <h4 class="text-xl font-semibold mb-3 text-red-600">Password Management</h4>
+                        <p class="text-sm text-gray-600 mb-3">You must be the Administrator to change passwords.</p>
+                        <div class="space-y-3 p-4 border rounded-lg bg-red-50">
+                            <input type="password" id="current-admin-pw" class="w-full p-2 border rounded-lg" placeholder="Current Admin Password">
+                            <input type="password" id="new-admin-pw" class="w-full p-2 border rounded-lg" placeholder="New Administrator Password (admin123)">
+                            <input type="password" id="new-supervisor-pw" class="w-full p-2 border rounded-lg" placeholder="New Supervisor Password (super123)">
+                            <button onclick="changePasswords()" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Update Passwords</button>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button onclick="hideSettingsModal()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Close Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Transaction Modal -->
+        <div id="transaction-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
+            <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md">
+                <h3 class="text-xl font-bold mb-4" id="transaction-modal-title">Record Transaction</h3>
+                <p id="transaction-item-name" class="text-lg font-semibold mb-4 text-blue-600"></p>
+                <div class="flex space-x-4 mb-4">
+                    <button id="in-btn" onclick="setTransactionType('in')" class="flex-1 p-3 bg-green-100 text-green-700 rounded-lg border border-green-300 hover:bg-green-200">Record IN</button>
+                    <button id="out-btn" onclick="setTransactionType('out')" class="flex-1 p-3 bg-red-100 text-red-700 rounded-lg border border-red-300 hover:bg-red-200">Record OUT</button>
+                </div>
+                <input type="number" id="transaction-quantity" class="w-full p-3 border rounded-lg mb-4" placeholder="Quantity">
+                <p id="transaction-error" class="text-red-500 mb-4 hidden"></p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="hideTransactionModal()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
+                    <button onclick="recordTransaction()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Transaction</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Cleaning Request Modal -->
+        <div id="request-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
+            <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
+                <h3 class="text-2xl font-bold mb-4 text-green-700">Submit New Cleaning Request</h3>
+                <textarea id="request-message-input" rows="4" class="w-full p-3 border rounded-lg mb-4 focus:ring-green-500" placeholder="Please describe the required cleaning task..."></textarea>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Attach Photos (Max 5)</label>
+                    <input type="file" id="request-image-input" multiple accept="image/*" class="w-full p-2 border rounded-lg" onchange="previewImages('request')">
+                    <div id="request-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button onclick="hideRequestForm()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Cancel</button>
+                    <button onclick="submitNewRequest()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Submit Request</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Details/Completion Modal -->
+        <div id="request-details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-40">
+            <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <h3 class="text-2xl font-bold mb-4 text-blue-700" id="details-request-id">Cleaning Request Details</h3>
+                <div id="details-content" class="space-y-4">
+                    <p><strong>Status:</strong> <span id="details-status" class="font-bold"></span></p>
+                    <p><strong>Requested At:</strong> <span id="details-timestamp"></span></p>
+                    
+                    <!-- Request Message & Images -->
+                    <div class="border-t pt-4">
+                        <p class="font-semibold mb-2">Request Message:</p>
+                        <p id="details-request-message" class="p-3 bg-gray-50 rounded-lg whitespace-pre-wrap"></p>
+                        <p class="font-semibold mt-4 mb-2">Request Photos:</p>
+                        <div id="details-request-images" class="flex flex-wrap gap-2"></div>
+                    </div>
+
+                    <!-- Completion Form (Supervisor/Admin only) -->
+                    <div id="completion-form" class="border-t pt-4 hidden">
+                        <h4 class="text-xl font-semibold mb-3 text-red-600">Task Completion</h4>
+                        <textarea id="completion-message-input" rows="3" class="w-full p-3 border rounded-lg mb-4 focus:ring-red-500" placeholder="Enter completion notes..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Completion Photos (Max 5)</label>
+                        <input type="file" id="completion-image-input" multiple accept="image/*" class="w-full p-2 border rounded-lg" onchange="previewImages('completion')">
+                        <div id="completion-image-preview" class="flex flex-wrap gap-2 mt-2"></div>
+                        <button onclick="completeRequest()" class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Mark as Completed</button>
+                    </div>
+
+                    <!-- Completed Details -->
+                    <div id="completed-details" class="border-t pt-4 hidden">
+                        <p class="font-semibold mb-2 text-green-600">Completion Message:</p>
+                        <p id="details-completion-message" class="p-3 bg-green-50 rounded-lg whitespace-pre-wrap"></p>
+                        <p class="font-semibold mt-4 mb-2">Completion Photos:</p>
+                        <div id="details-completion-images" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <button id="approve-btn" onclick="approveRequest()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 hidden">Approve (In Progress)</button>
+                    <button onclick="hideRequestDetailsModal()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Image View Modal -->
+        <div id="full-image-modal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center p-4 z-[60]">
+            <span class="absolute top-4 right-6 text-white text-4xl cursor-pointer" onclick="hideFullImageModal()">&times;</span>
+            <img id="full-image-display" src="" alt="Full size image" class="max-w-full max-h-full object-contain rounded-lg">
+        </div>
+
+    </div>
+
+    <!-- Firebase Imports and Initialization -->
     <script type="module">
-        // Import Firebase SDKs (v11.6.1 for stability with the code structure)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, addDoc, getDocs, updateDoc, deleteDoc, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, Timestamp, orderBy, runTransaction, arrayRemove, arrayUnion, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Firebase Variables
-        window.app = null;
-        window.db = null;
-        window.auth = null;
-        window.userId = null;
-        window.isAdmin = false;
-        window.isSupervisor = false;
-        
-        // --- Firebase Initialization and Auth ---
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Mock Config */ };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // 🚨🚨🚨 사용자님의 Firebase 설정 정보가 적용되었습니다. 🚨🚨🚨
-        const firebaseConfig = {
-            apiKey: "AIzaSyD6-IKznyhHIH6eGztJOioL0cDQ57MvNvs",
-            authDomain: "rtu-system-han.firebaseapp.com",
-            databaseURL: "https://rtu-system-han-default-rtdb.firebaseio.com",
-            projectId: "rtu-system-han",
-            storageBucket: "rtu-system-han.firebasestorage.app",
-            messagingSenderId: "960060003353",
-            appId: "1:960060003353:web:25be936a3d3ebea8b0c688",
-            measurementId: "G-D0KT7KEC1H"
+        let app, db, auth;
+        let userId = null;
+        let currentData = {
+            settings: null,
+            items: [],
+            requests: [],
+            transactions: []
         };
-        
-        // 프로젝트 ID를 앱의 고유 ID로 사용합니다.
-        const appId = firebaseConfig.projectId; 
-        // 익명 로그인을 사용하므로 초기 인증 토큰은 null입니다.
-        const initialAuthToken = null; 
-        
-        // 🚨🚨🚨 END OF FIREBASE CONFIGURATION 🚨🚨🚨
+        let currentItemForTransaction = null;
+        let currentTransactionType = null;
+        let currentRequestDocId = null;
 
+        // Mock Passwords (In a real app, these would be securely hashed and stored.)
+        const ADMIN_PW = 'admin123';
+        const SUPER_PW = 'super123';
 
-        // Application State
-        window.state = {
-            currentView: 'home',
-            settings: {
-                weeklyPlan: Array(10).fill({ day: '월요일', task: '' }),
-                safetyStock: {},
-                consumables: [
-                    { id: 'toilet_paper', name: '화장실 휴지', category: 'consumable', reorderLevel: 50 },
-                    { id: 'liquid_soap', name: '물비누', category: 'consumable', reorderLevel: 20 },
-                    { id: 'paper_towel', name: '페이퍼 타월', category: 'consumable', reorderLevel: 30 },
-                    { id: 'trash_bag_l', name: '검정 쓰레기 봉투(대)', category: 'consumable', reorderLevel: 10 },
-                    { id: 'trash_bag_s', name: '쓰레기통 봉투(소)', category: 'consumable', reorderLevel: 10 },
-                ],
-                supplies: [
-                    { id: 'nabc', name: 'NABC', category: 'supply', reorderLevel: 5 },
-                    { id: 'bleach', name: 'Bleach', category: 'supply', reorderLevel: 3 },
-                    { id: 'xcelente', name: 'Xcelente', category: 'supply', reorderLevel: 4 },
-                    { id: 'eco_lyzer', name: 'Eco-Lyzer', category: 'supply', reorderLevel: 4 },
-                    { id: 'fast_easy', name: 'Fast & easy', category: 'supply', reorderLevel: 5 },
-                    { id: 'wipes', name: 'Wipes', category: 'supply', reorderLevel: 10 },
-                    { id: 'gloves_m', name: 'Gloves M', category: 'supply', reorderLevel: 10 },
-                    { id: 'pine_sol', name: 'Pine-sol', category: 'supply', reorderLevel: 5 },
-                    { id: 'brown_bag', name: 'brown bag', category: 'supply', reorderLevel: 10 },
-                ],
-                // 사용자 요청에 따라 관리자/수퍼바이저 비밀번호를 0000/1111로 변경
-                passwords: { admin: '0000', supervisor: '1111' } // Initial default passwords as requested by user
-            },
-            inventory: {}, // Current stock calculated from logs
-            requests: [], // List of cleaning requests
-            inventoryLogs: [], // All inventory logs
-            isAuthReady: false,
-            passwordCallback: null,
-            passwordRole: null,
-            inventoryActionContext: null, // Critical flag for inventory modal state
-        };
-
-        /**
-         * Converts base64 image data (simulated) to a URL for display.
-         */
-        window.toImageUrl = (base64) => base64 ? `data:image/png;base64,${base64}` : 'https://placehold.co/100x100/f3f4f6/9ca3af?text=No+Image';
-
-        /**
-         * Global function to display a temporary message. (Localized to English)
-         */
-        window.showMessage = (message, type = 'success') => {
-            const box = document.getElementById('message-box');
-            let bgColor = 'bg-green-500';
-            let icon = 'check-circle';
-
-            if (type === 'error') {
-                bgColor = 'bg-red-500';
-                icon = 'alert-triangle';
-            } else if (type === 'info') {
-                bgColor = 'bg-blue-500';
-                icon = 'info';
-            }
-
-            const messageHtml = `
-                <div class="${bgColor} text-white p-4 rounded-lg shadow-xl mb-3 flex items-center transform transition-all duration-300">
-                    <i data-lucide="${icon}" class="w-5 h-5 mr-3"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            box.insertAdjacentHTML('beforeend', messageHtml);
-            lucide.createIcons();
-
-            const latestMessage = box.lastElementChild;
-            
-            // 3초 후 페이드 아웃 시작
-            setTimeout(() => {
-                // 페이드 아웃 효과를 위한 CSS 속성 적용
-                latestMessage.style.transition = 'opacity 0.5s ease-in-out';
-                latestMessage.style.opacity = '0';
-                
-                // 0.5초 후 완전히 제거
-                setTimeout(() => {
-                    latestMessage.remove();
-                }, 500);
-            }, 3000); // 3.0초 대기
-        };
-
-        /**
-         * Initializes Firebase and sets up authentication/listeners. (Localized to English)
-         */
-        window.setupFirebase = async () => {
+        // Initialize Firebase and Authentication
+        window.onload = async () => {
+            // setLogLevel('Debug'); // Enable for debugging
             try {
-                // Set Firestore logging to Debug for visibility in console
-                setLogLevel('Debug');
-                
-                window.app = initializeApp(firebaseConfig);
-                window.db = getFirestore(window.app);
-                window.auth = getAuth(window.app);
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-                // Initial Authentication
+                // Authentication
                 if (initialAuthToken) {
-                    await signInWithCustomToken(window.auth, initialAuthToken);
+                    await signInWithCustomToken(auth, initialAuthToken);
                 } else {
-                    await signInAnonymously(window.auth);
+                    await signInAnonymously(auth);
                 }
 
-                // Auth state listener
-                onAuthStateChanged(window.auth, (user) => {
+                onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        window.userId = user.uid;
-                        document.getElementById('auth-status').innerHTML = `
-                            사용자 ID: <span class="font-mono text-xs p-1 bg-gray-100 rounded">${window.userId}</span> |
-                            <span class="text-green-600">인증됨</span>
-                        `;
-                        // Start listening to data only after successful authentication
-                        window.state.isAuthReady = true;
-                        window.setupDataListeners();
-                        window.render();
+                        userId = user.uid;
+                        console.log("User authenticated. ID:", userId);
+                        // Start listeners after authentication is confirmed
+                        setupRealtimeListeners();
+                        initializeDefaultData();
                     } else {
-                        document.getElementById('auth-status').innerHTML = `<span class="text-red-600">인증 실패</span>`;
+                        userId = null;
+                        console.log("No user signed in. Using Anonymous Auth.");
+                        setupRealtimeListeners();
+                        initializeDefaultData();
                     }
                 });
 
             } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                window.showMessage(`Firebase 초기화 오류: ${error.message}`, 'error');
+                console.error("Firebase Initialization or Auth Failed:", error);
             }
         };
 
-        /**
-         * Helper function to get a reference to a document in the public data path.
-         * The path structure is: artifacts/{appId}/public/data/{collectionName}/{documentId}
-         */
-        const getPublicConfigDocRef = (collectionName, documentId = 'config') => {
-             // 4 segment document ref: artifacts/{appId}/public/data
-            const publicRootDocRef = doc(window.db, 'artifacts', appId, 'public', 'data');
-            // 5 segment collection ref: artifacts/{appId}/public/data/{collectionName}
-            const collectionRef = collection(publicRootDocRef, collectionName);
-            // 6 segment document ref: artifacts/{appId}/public/data/{collectionName}/{documentId}
-            return doc(collectionRef, documentId);
-        }
-
-        /**
-         * Helper function to get a reference to a public collection (5 segments).
-         */
+        // --- Data Paths ---
         const getPublicCollectionRef = (collectionName) => {
-             // 4 segment document ref: artifacts/{appId}/public/data
-            const publicRootDocRef = doc(window.db, 'artifacts', appId, 'public', 'data');
-            // 5 segment collection ref: artifacts/{appId}/public/data/{collectionName}
-            return collection(publicRootDocRef, collectionName);
-        }
-
-        /**
-         * Sets up real-time listeners for all necessary data.
-         */
-        window.setupDataListeners = () => {
-            if (!window.state.isAuthReady || !window.db) return;
-
-            const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
-            
-            // 1. Settings (Admin's Private Data for Passwords/Master Lists)
-            onSnapshot(userDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    window.state.settings.passwords = data.passwords || window.state.settings.passwords;
-                    window.state.settings.consumables = data.consumables || window.state.settings.consumables;
-                    window.state.settings.supplies = data.supplies || data.supplies;
-                } else {
-                    // Initialize settings if it's the first run for this user
-                    // This sets initial passwords and inventory lists.
-                    setDoc(userDocRef, {
-                        passwords: window.state.settings.passwords,
-                        consumables: window.state.settings.consumables,
-                        supplies: window.state.settings.supplies,
-                    }, { merge: true });
-                }
-            });
-
-            // 2. Weekly Plan (Public Data - Config document in the collection)
-            const planDocRef = getPublicConfigDocRef('itac_plan');
-            onSnapshot(planDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    window.state.settings.weeklyPlan = docSnap.data().weeklyPlan || window.state.settings.weeklyPlan;
-                } else {
-                    setDoc(planDocRef, { weeklyPlan: window.state.settings.weeklyPlan });
-                }
-                window.render();
-            });
-            
-            // 3. Safety Stock Levels (Public Data - Config document in the collection)
-            const safetyStockDocRef = getPublicConfigDocRef('itac_safety_stock');
-            onSnapshot(safetyStockDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    window.state.settings.safetyStock = docSnap.data().levels || {};
-                }
-                window.render();
-            });
-
-            // 4. Inventory Logs (Private Data - Admin/Supervisor managed)
-            onSnapshot(collection(userDocRef, 'itac_inventory_logs'), (snapshot) => {
-                window.state.inventoryLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                window.calculateInventory(); // Recalculate stock and re-render
-            });
-
-            // 5. Cleaning Requests (Public Data - Collection)
-            const requestsCollectionRef = getPublicCollectionRef('cleaning_requests');
-            // NOTE: Firestore requires an index for orderBy. To avoid user-side indexing issues, 
-            // the sorting is done in memory. (Removed `orderBy` from query).
-            onSnapshot(requestsCollectionRef, (snapshot) => {
-                window.state.requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                    .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)); // Sort by timestamp DESC
-                window.render();
-            });
-
+            return collection(db, 'artifacts', appId, 'public', 'data', collectionName);
+        };
+        const getPrivateDocRef = (docId) => {
+            // For simplicity, we are mocking passwords here, but the structure shows where private data *should* go
+            // We'll store the mock passwords in a public settings doc for this simulation since we can't write to private user docs based on admin role.
+            return doc(getPublicCollectionRef('settings'), docId); 
         };
 
-        // --- Inventory Logic ---
+        // --- Data Initialization ---
+        const initializeDefaultData = async () => {
+            const settingsRef = getPrivateDocRef('app_settings');
+            const settingsSnap = await getDoc(settingsRef);
 
-        /**
-         * Recalculates current inventory stock levels from the logs.
-         */
-        window.calculateInventory = () => {
-            const stock = {};
-            window.state.inventoryLogs.forEach(log => {
-                stock[log.itemId] = stock[log.itemId] || 0;
-                if (log.type === 'in') {
-                    stock[log.itemId] += log.quantity;
-                } else if (log.type === 'out') {
-                    stock[log.itemId] -= log.quantity;
-                }
-            });
-            window.state.inventory = stock;
-            window.render();
-        };
-
-        // --- Authentication & Security Logic (Password Check) (Localized to English) ---
-
-        /**
-         * Checks user-entered password against Admin/Supervisor passwords.
-         * @param {string} role 'admin' or 'supervisor'
-         * @param {function} callback Function to execute on success
-         */
-        window.checkPassword = (role, callback) => {
-            const modal = document.getElementById('password-modal');
-            const title = document.getElementById('modal-title');
-            const roleInfo = document.getElementById('modal-role-info');
-            const confirmBtn = modal.querySelector('button:last-child');
-            const cancelBtn = modal.querySelector('button:first-child');
-
-            // Set state for the modal
-            window.state.passwordCallback = callback;
-            window.state.passwordRole = role;
-
-            title.textContent = `${role === 'admin' ? '관리자' : '수퍼바이저'} 비밀번호 확인`;
-            roleInfo.textContent = `이 작업은 ${role === 'admin' ? '관리자' : '관리자 또는 수퍼바이저'} 권한이 필요합니다.`;
-            document.getElementById('password-input').value = '';
-            
-            confirmBtn.textContent = '확인';
-            cancelBtn.textContent = '취소';
-            document.getElementById('password-input').placeholder = '비밀번호 입력';
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        };
-
-        window.submitPassword = () => {
-            const password = document.getElementById('password-input').value;
-            const role = window.state.passwordRole;
-            const passwords = window.state.settings.passwords;
-            let success = false;
-            
-            // [FIX] closePasswordModal()이 window.state.passwordCallback을 null로 만들기 전에 콜백을 저장합니다.
-            const storedCallback = window.state.passwordCallback; 
-
-            if (role === 'admin' && password === passwords.admin) {
-                success = true;
-                window.isAdmin = true;
-            } else if (role === 'supervisor' && (password === passwords.admin || password === passwords.supervisor)) {
-                success = true;
-                // Note: Admin also passes supervisor check
-                window.isAdmin = (password === passwords.admin);
-                window.isSupervisor = (password === passwords.supervisor);
-            }
-
-            // 1. 비밀번호 모달 UI 닫기
-            document.getElementById('password-modal').classList.remove('flex');
-            document.getElementById('password-modal').classList.add('hidden');
-
-            if (success && typeof storedCallback === 'function') { // 저장된 콜백이 함수인지 확인 후 실행
+            if (!settingsSnap.exists()) {
+                console.log("Creating default settings and items...");
                 
-                // 2. 성공 시 콜백 실행 (예: openIOModalAfterPasswordSuccess)
-                storedCallback();
-                window.showMessage('비밀번호가 성공적으로 확인되었습니다!', 'success');
-                
-            } else if (!success) {
-                // 2. 실패 시: IO 모달은 열리지 않았으므로, 재고 작업 Context를 정리하고 사용자에게 에러를 보여줍니다.
-                if (window.state.passwordRole === 'supervisor' && window.state.inventoryActionContext) {
-                    window.state.inventoryActionContext = null;
-                    window.showMessage('비밀번호가 일치하지 않아 재고 입력이 취소되었습니다.', 'error');
-                } else {
-                    window.showMessage('비밀번호가 일치하지 않습니다.', 'error');
-                }
-            }
-            
-            // 3. 비밀번호 관련 상태 초기화
-            window.state.passwordCallback = null;
-            window.state.passwordRole = null;
-            window.isAdmin = false;
-            window.isSupervisor = false;
-        };
-
-        /**
-         * [FINAL FIX FOR UX FLOW]
-         * 비밀번호 모달이 닫힐 때, 실패/취소 상황이면 재고 입력 모달이 열리는 것을 막기 위해 Context를 정리합니다.
-         * IO 모달은 아직 열리지 않았으므로, IO 모달을 닫는 로직은 필요 없습니다.
-         */
-        window.closePasswordModal = () => {
-            
-            // 사용자가 비밀번호 모달에서 '취소'를 눌렀을 때, 재고 작업 Context를 정리하고 취소 메시지 표시
-            if (window.state.passwordRole === 'supervisor' && window.state.inventoryActionContext) {
-                window.state.inventoryActionContext = null;
-                window.showMessage('재고 입력이 취소되었습니다. (비밀번호 확인 취소)', 'info');
-            }
-            
-            // 비밀번호 모달 닫기 및 상태 초기화
-            document.getElementById('password-modal').classList.remove('flex');
-            document.getElementById('password-modal').classList.add('hidden');
-            window.state.passwordCallback = null;
-            window.state.passwordRole = null;
-            window.isAdmin = false;
-            window.isSupervisor = false;
-        };
-
-        // --- UI Rendering ---
-
-        /**
-         * Changes the active view and re-renders.
-         */
-        window.changeView = (view) => {
-            window.state.currentView = view;
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.tab-button[onclick="changeView('${view}')"]`).classList.add('active');
-            window.render();
-        };
-        
-        /**
-         * Main rendering function based on current state.
-         */
-        window.render = () => {
-            const content = document.getElementById('main-content');
-            content.innerHTML = '';
-            lucide.createIcons(); // Re-create lucide icons after injecting new HTML
-
-            switch (window.state.currentView) {
-                case 'home':
-                    content.innerHTML = window.renderHome();
-                    break;
-                case 'requests':
-                    content.innerHTML = window.renderRequests();
-                    break;
-                case 'settings':
-                    content.innerHTML = window.renderSettings();
-                    break;
-                case 'reports':
-                    content.innerHTML = window.renderReports();
-                    break;
-                default:
-                    content.innerHTML = window.renderHome();
-            }
-
-            // Re-initialize icons
-            lucide.createIcons();
-        };
-
-        // --- View Renderers (Mostly Localized to English) ---
-
-        window.renderHome = () => {
-            const allItems = [...window.state.settings.consumables, ...window.state.settings.supplies];
-            const reorderAlerts = allItems.filter(item => {
-                const currentStock = window.state.inventory[item.id] || 0;
-                const reorderLevel = window.state.settings.safetyStock[item.id] !== undefined ? window.state.settings.safetyStock[item.id] : item.reorderLevel;
-                return currentStock <= reorderLevel;
-            });
-            
-            const weeklyPlanRows = window.state.settings.weeklyPlan.map((plan, index) => `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 font-medium text-gray-900">${plan.day || 'N/A'}</td>
-                    <td class="p-3 text-gray-700">${plan.task || '계획 없음'}</td>
-                </tr>
-            `).join('');
-
-            const inventoryHtml = (items, title) => `
-                <h3 class="text-2xl font-semibold mb-4 text-gray-700">${title}</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    ${items.map(item => {
-                        const currentStock = window.state.inventory[item.id] || 0;
-                        const reorderLevel = window.state.settings.safetyStock[item.id] !== undefined ? window.state.settings.safetyStock[item.id] : item.reorderLevel;
-                        const isAlert = currentStock <= reorderLevel;
-                        return `
-                            <div class="bg-white p-5 rounded-xl shadow-lg border ${isAlert ? 'border-red-500 ring-4 ring-red-100' : 'border-gray-200'} cursor-pointer hover:shadow-xl transition" onclick="openIOModal('${item.id}', '${item.name}')">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h4 class="font-bold text-lg text-gray-800">${item.name}</h4>
-                                    ${isAlert ? '<i data-lucide="bell-ring" class="w-6 h-6 text-red-500 animate-pulse"></i>' : ''}
-                                </div>
-                                <p class="text-sm text-gray-600">현재 재고: <span class="text-2xl font-extrabold ${isAlert ? 'text-red-600' : 'text-blue-600'}">${currentStock}</span> 개</p>
-                                <p class="text-xs text-gray-500 mt-1">안전 재고: ${reorderLevel}</p>
-                                ${isAlert ? '<p class="text-xs font-bold text-red-500 mt-2">🚨 재고 부족 알림</p>' : ''}
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-
-            return `
-                <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
-                    <h2 class="text-3xl font-bold text-blue-600 mb-4 flex items-center">
-                        <i data-lucide="calendar" class="w-7 h-7 mr-2"></i>
-                        주간 청소 계획
-                    </h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-1/4">요일/분류</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-3/4">계획 상세</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${weeklyPlanRows}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                ${reorderAlerts.length > 0 ? `
-                    <div class="bg-red-50 p-5 rounded-xl border border-red-300 shadow-md mb-6">
-                        <h2 class="text-2xl font-bold text-red-600 mb-3 flex items-center">
-                            <i data-lucide="alert-triangle" class="w-6 h-6 mr-2"></i>
-                            긴급 재고 부족 알림
-                        </h2>
-                        <ul class="list-disc list-inside text-red-700 space-y-1">
-                            ${reorderAlerts.map(item => `
-                                <li><strong>${item.name}</strong>: 현재 재고 ${window.state.inventory[item.id] || 0} (안전 재고 ${window.state.settings.safetyStock[item.id] !== undefined ? window.state.settings.safetyStock[item.id] : item.reorderLevel})</li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                ` : `<div class="bg-green-50 p-4 rounded-xl shadow-md mb-6 text-green-700 font-medium flex items-center">
-                    <i data-lucide="thumbs-up" class="w-5 h-5 mr-2"></i>
-                    모든 재고 수준이 충분합니다.
-                </div>`}
-
-                <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        ${inventoryHtml(window.state.settings.consumables, '소모품 재고 현황 (입/출고를 위해 항목 클릭)')}
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        ${inventoryHtml(window.state.settings.supplies, '청소 용품 재고 현황 (입/출고를 위해 항목 클릭)')}
-                    </div>
-                </div>
-            `;
-        };
-
-        window.renderRequests = () => {
-            const requestsHtml = window.state.requests.length > 0 ? window.state.requests.map(req => `
-                <div class="bg-white p-5 rounded-xl shadow-md border ${req.status === '완료' ? 'border-green-300' : req.status === '작업중' ? 'border-blue-300' : 'border-gray-300'}">
-                    <div class="flex justify-between items-start mb-3 border-b pb-3">
-                        <span class="text-sm text-gray-500">${new Date(req.timestamp.seconds * 1000).toLocaleString('ko-KR')}</span>
-                        <span class="px-3 py-1 text-sm font-semibold rounded-full ${req.status === '완료' ? 'bg-green-100 text-green-800' : req.status === '작업중' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}">${req.status}</span>
-                    </div>
-                    <p class="text-lg font-semibold mb-3">요청 메시지:</p>
-                    <p class="text-gray-700 mb-4 p-3 bg-gray-50 rounded-lg whitespace-pre-wrap">${req.requestMessage}</p>
-
-                    <div class="mb-4">
-                        <p class="text-md font-medium text-gray-700 mb-2">요청 사진:</p>
-                        <div class="flex flex-wrap gap-2">
-                            ${req.requestPhotos ? req.requestPhotos.map(p => `<img src="${window.toImageUrl(p)}" class="w-20 h-20 object-cover rounded-md shadow" onerror="this.src='https://placehold.co/80x80/cccccc/333333?text=Load+Error';">`).join('') : '<p class="text-sm text-gray-500">사진 없음</p>'}
-                        </div>
-                    </div>
-
-                    ${req.status === '완료' ? `
-                        <div class="mt-4 pt-4 border-t border-gray-100">
-                            <p class="text-lg font-semibold mb-3 text-green-600">완료 보고서:</p>
-                            <p class="text-gray-700 mb-4 p-3 bg-green-50 rounded-lg whitespace-pre-wrap">${req.completionMessage || '메시지 없음'}</p>
-                            <p class="text-md font-medium text-gray-700 mb-2">완료 사진:</p>
-                            <div class="flex flex-wrap gap-2">
-                                ${req.completionPhotos ? req.completionPhotos.map(p => `<img src="${window.toImageUrl(p)}" class="w-20 h-20 object-cover rounded-md shadow" onerror="this.src='https://placehold.co/80x80/cccccc/333333?text=Load+Error';">`).join('') : '<p class="text-sm text-gray-500">사진 없음</p>'}
-                            </div>
-                        </div>
-                    ` : ''}
-
-                    <div class="mt-4 pt-4 border-t border-gray-100 flex space-x-2">
-                        ${req.status === '대기' ? `
-                            <button class="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition" onclick="checkPassword('supervisor', () => updateRequestStatus('${req.id}', '작업중'))">작업 중으로 변경</button>
-                        ` : ''}
-                        ${req.status === '작업중' ? `
-                            <button class="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition" onclick="openCompletionForm('${req.id}')">작업 완료 보고</button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('') : '<p class="text-center text-gray-500 text-lg py-10 bg-white rounded-xl shadow-md">현재 게시된 청소 요청이 없습니다.</p>';
-
-            return `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-1">
-                        <div class="bg-white p-6 rounded-xl shadow-lg sticky top-[100px]">
-                            <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-                                <i data-lucide="plus-circle" class="w-6 h-6 mr-2"></i>
-                                새로운 청소 요청 (전체 사용자)
-                            </h2>
-                            <textarea id="request-message" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-3" placeholder="상세 요청 메시지를 입력하세요."></textarea>
-                            
-                            <label class="block text-sm font-medium text-gray-700 mb-1">사진 첨부 (최대 5개, Base64 시뮬레이션)</label>
-                            <input type="file" id="request-photo-input" accept="image/*" multiple max="5" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4" onchange="previewImages(this, 'request-preview')">
-                            
-                            <div id="request-preview" class="flex flex-wrap gap-2 mb-4"></div>
-
-                            <button class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="submitCleaningRequest()">요청 제출</button>
-                        </div>
-                    </div>
-
-                    <div class="lg:col-span-2 space-y-4" id="request-list-container">
-                        <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center">
-                            <i data-lucide="list-ordered" class="w-6 h-6 mr-2"></i>
-                            전체 요청 목록
-                        </h2>
-                        ${requestsHtml}
-                    </div>
-                </div>
-            `;
-        };
-
-        window.renderSettings = () => {
-            const currentPasswords = window.state.settings.passwords;
-            const allItems = [...window.state.settings.consumables, ...window.state.settings.supplies];
-
-            const itemRows = (items) => items.map(item => `
-                <li class="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-gray-50">
-                    <span class="text-gray-700">${item.name} (ID: ${item.id})</span>
-                    <button class="text-red-500 hover:text-red-700 p-1 rounded-full" onclick="deleteInventoryItem('${item.id}', '${item.category}')">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </li>
-            `).join('');
-            
-            const safetyStockRows = allItems.map(item => {
-                const currentLevel = window.state.settings.safetyStock[item.id] !== undefined ? window.state.settings.safetyStock[item.id] : item.reorderLevel;
-                return `
-                    <div class="flex items-center space-x-4 p-3 border-b hover:bg-gray-50">
-                        <span class="w-1/3 text-gray-700 font-medium">${item.name}</span>
-                        <input type="number" id="safety-stock-${item.id}" value="${currentLevel}" min="0" class="w-1/4 p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-center">
-                        <span class="text-sm text-gray-500">개 (이 수준 이하로 떨어지면 알림)</span>
-                    </div>
-                `;
-            }).join('');
-
-
-            return `
-                <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-                            <i data-lucide="key" class="w-6 h-6 mr-2"></i>
-                            관리자/수퍼바이저 비밀번호 설정
-                        </h2>
-                        <div class="space-y-4">
-                            <div>
-                                <label for="admin-pw" class="block text-sm font-medium text-gray-700">관리자 비밀번호 (현재: ${currentPasswords.admin ? '설정됨' : '미설정'})</label>
-                                <input type="password" id="admin-pw" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="새 관리자 비밀번호">
-                            </div>
-                            <div>
-                                <label for="supervisor-pw" class="block text-sm font-medium text-gray-700">수퍼바이저 비밀번호 (현재: ${currentPasswords.supervisor ? '설정됨' : '미설정'})</label>
-                                <input type="password" id="supervisor-pw" class="mt-1 w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="새 수퍼바이저 비밀번호">
-                            </div>
-                            <button class="bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updatePasswords)">비밀번호 저장 (관리자 전용)</button>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-                            <i data-lucide="calendar-plus" class="w-6 h-6 mr-2"></i>
-                            주간 청소 계획 설정 (10줄)
-                        </h2>
-                        <div id="weekly-plan-editor" class="space-y-3">
-                            ${window.state.settings.weeklyPlan.map((plan, index) => `
-                                <div class="flex space-x-3 items-center">
-                                    <select id="plan-day-${index}" class="p-2 border border-gray-300 rounded-lg w-1/4">
-                                        ${['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일', '특이사항'].map(d => `<option value="${d}" ${plan.day === d ? 'selected' : ''}>${d}</option>`).join('')}
-                                    </select>
-                                    <input type="text" id="plan-task-${index}" value="${plan.task}" class="p-2 border border-gray-300 rounded-lg w-3/4" placeholder="청소 작업 내용">
-                                </div>
-                            `).join('')}
-                        </div>
-                        <button class="mt-4 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updateWeeklyPlan)">주간 계획 저장 (관리자 전용)</button>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-                            <i data-lucide="shield" class="w-6 h-6 mr-2"></i>
-                            안전 재고/재주문 수량 설정
-                        </h2>
-                        <div id="safety-stock-editor" class="space-y-2">
-                            ${safetyStockRows}
-                        </div>
-                        <button class="mt-4 bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="checkPassword('admin', updateSafetyStock)">안전 재고 저장 (관리자 전용)</button>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-lg">
-                        <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center">
-                            <i data-lucide="list-plus" class="w-6 h-6 mr-2"></i>
-                            재고 항목 추가/삭제 (관리자 전용)
-                        </h2>
-                        
-                        <div class="flex space-x-4 mb-6">
-                            <input type="text" id="new-item-name" class="p-3 border border-gray-300 rounded-lg w-1/3" placeholder="새 항목 이름">
-                            <select type="text" id="new-item-category" class="p-3 border border-gray-300 rounded-lg w-1/3">
-                                <option value="consumable">소모품</option>
-                                <option value="supply">청소 용품</option>
-                            </select>
-                            <input type="number" id="new-item-reorder-level" class="p-3 border border-gray-300 rounded-lg w-1/6" placeholder="기본 재주문 수량" value="10" min="0">
-                            <button class="bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition w-1/6" onclick="checkPassword('admin', addInventoryItem)">항목 추가</button>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
-                                <h3 class="text-xl font-semibold mb-3">소모품 목록</h3>
-                                <ul class="divide-y divide-gray-200">
-                                    ${itemRows(window.state.settings.consumables)}
-                                </ul>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
-                                <h3 class="text-xl font-semibold mb-3">청소 용품 목록</h3>
-                                <ul class="divide-y divide-gray-200">
-                                    ${itemRows(window.state.settings.supplies)}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-        
-        window.renderReports = () => {
-            const logs = window.state.inventoryLogs;
-            
-            // Function to filter and format logs
-            const renderLogTable = (filteredLogs) => {
-                if (filteredLogs.length === 0) {
-                    return '<p class="text-center text-gray-500 py-6">선택한 기간에 대한 재고 기록이 없습니다.</p>';
-                }
-
-                return `
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">날짜</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">항목</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">구분</th>
-                                    <th class="p-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">수량</th>
-                                    <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">메모</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                ${filteredLogs.map(log => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="p-3 text-sm text-gray-900">${new Date(log.timestamp.seconds * 1000).toLocaleDateString('ko-KR')}</td>
-                                        <td class="p-3 text-sm text-gray-700">${log.itemName}</td>
-                                        <td class="p-3 text-sm font-medium ${log.type === 'in' ? 'text-blue-600' : 'text-red-600'}">${log.type === 'in' ? '입고' : '출고'}</td>
-                                        <td class="p-3 text-right text-sm font-bold">${log.quantity}</td>
-                                        <td class="p-3 text-sm text-gray-500">${log.memo || '-'}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            };
-
-            return `
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <h2 class="text-3xl font-bold text-blue-600 mb-6 flex items-center">
-                        <i data-lucide="clipboard-list" class="w-7 h-7 mr-2"></i>
-                        재고 기록 보고서
-                    </h2>
-
-                    <div class="flex flex-wrap items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6 p-4 border rounded-lg bg-gray-50">
-                        <div class="flex-shrink-0 text-sm font-medium text-gray-700">기간 선택:</div>
-                        <input type="date" id="report-start-date" class="p-2 border border-gray-300 rounded-lg">
-                        <span>~</span>
-                        <input type="date" id="report-end-date" class="p-2 border border-gray-300 rounded-lg">
-                        <button class="bg-gray-700 text-white p-2 rounded-lg hover:bg-gray-800 transition text-sm" onclick="filterLogs()">필터링</button>
-                        
-                        <div class="sm:ml-auto flex space-x-2">
-                            <button class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 transition text-sm" onclick="exportToExcel()">
-                                <i data-lucide="file-text" class="w-5 h-5 inline-block mr-1"></i>
-                                엑셀로 내보내기 (시뮬레이션)
-                            </button>
-                            <button class="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition text-sm" onclick="window.print()">
-                                <i data-lucide="printer" class="w-5 h-5 inline-block mr-1"></i>
-                                인쇄
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="report-table-container">
-                        <h3 class="text-xl font-semibold mb-3 text-gray-700">전체 재고 기록 (최신순)</h3>
-                        ${renderLogTable(logs)}
-                    </div>
-                </div>
-            `;
-        };
-
-        // --- Core Action Functions ---
-
-        /**
-         * Cleans up file input and converts file data (simulated as Base64)
-         */
-        const processFile = (fileInput) => {
-            const files = Array.from(fileInput.files).slice(0, 5); // Max 5 files
-            const base64Photos = [];
-            
-            files.forEach(file => {
-                // Simplified Base64 conversion for demonstration, as actual FileReader is asynchronous
-                // and complex to manage in a single-function structure.
-                // For now, we simulate.
-                base64Photos.push(`DEMO_BASE64_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`);
-            });
-            return base64Photos;
-        };
-        
-        /**
-         * Cleans up file input and converts file data (actual Base64 conversion for simple files).
-         * NOTE: This simplified version will only successfully encode very small files or placeholders.
-         */
-        window.previewImages = (input, previewId) => {
-            const preview = document.getElementById(previewId);
-            preview.innerHTML = '';
-            const files = Array.from(input.files).slice(0, 5);
-
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.innerHTML += `<img src="${e.target.result}" class="w-16 h-16 object-cover rounded-md shadow">`;
+                const initialSettings = {
+                    weekly_schedule: [
+                        'Monday: Deep clean main areas.',
+                        'Tuesday: Restroom sanitization and supply check.',
+                        'Wednesday: Office desks and equipment wipe-down.',
+                        'Thursday: Floor polishing in high-traffic zones.',
+                        'Friday: Waste disposal and exterior area check.',
+                        'Saturday: Special cleaning projects.',
+                        'Sunday: Off-day.'
+                    ],
+                    // Mock initial passwords for simulation purposes
+                    admin_password_mock: ADMIN_PW,
+                    supervisor_password_mock: SUPER_PW
                 };
-                reader.readAsDataURL(file);
+
+                const initialItems = [
+                    // Consumables (Type: 1)
+                    { id: 'toilet_paper', name: 'Toilet Paper', type: 1, current_stock: 50, safety_stock: 20, reorder_qty: 100 },
+                    { id: 'liquid_soap', name: 'Liquid Soap', type: 1, current_stock: 15, safety_stock: 10, reorder_qty: 30 },
+                    { id: 'paper_towel', name: 'Paper Towel', type: 1, current_stock: 45, safety_stock: 25, reorder_qty: 75 },
+                    { id: 'trash_bag_l', name: 'Black Trash Bags (Large)', type: 1, current_stock: 30, safety_stock: 15, reorder_qty: 50 },
+                    { id: 'trash_bag_s', name: 'Trash Can Liners (Small)', type: 1, current_stock: 80, safety_stock: 40, reorder_qty: 120 },
+                    
+                    // Chemicals (Type: 2)
+                    { id: 'nabc', name: 'NABC', type: 2, current_stock: 12, safety_stock: 5, reorder_qty: 20 },
+                    { id: 'bleach', name: 'Bleach', type: 2, current_stock: 8, safety_stock: 4, reorder_qty: 15 },
+                    { id: 'xcelente', name: 'Xcelente', type: 2, current_stock: 18, safety_stock: 10, reorder_qty: 30 },
+                    { id: 'ecolyzer', name: 'Eco-Lyzer', type: 2, current_stock: 5, safety_stock: 3, reorder_qty: 10 },
+                    { id: 'fast_easy', name: 'Fast & Easy', type: 2, current_stock: 25, safety_stock: 15, reorder_qty: 40 },
+                    { id: 'wipes', name: 'Wipes', type: 2, current_stock: 60, safety_stock: 30, reorder_qty: 80 },
+                    { id: 'gloves_m', name: 'Gloves M', type: 2, current_stock: 100, safety_stock: 50, reorder_qty: 150 },
+                    { id: 'pine_sol', name: 'Pine-sol', type: 2, current_stock: 7, safety_stock: 5, reorder_qty: 15 },
+                    { id: 'brown_bag', name: 'Brown Bag', type: 2, current_stock: 30, safety_stock: 20, reorder_qty: 50 },
+                ];
+
+                await setDoc(settingsRef, initialSettings);
+                
+                const itemCollectionRef = getPublicCollectionRef('items');
+                for (const item of initialItems) {
+                    await setDoc(doc(itemCollectionRef, item.id), item);
+                }
+                console.log("Default data initialized.");
+            }
+        };
+
+        // --- Realtime Listeners ---
+        const setupRealtimeListeners = () => {
+            // 1. Settings Listener (Weekly Plan & Passwords)
+            onSnapshot(getPrivateDocRef('app_settings'), (docSnap) => {
+                if (docSnap.exists()) {
+                    currentData.settings = docSnap.data();
+                    renderWeeklySchedule();
+                    console.log("Settings updated.");
+                }
+            });
+
+            // 2. Items Listener (Inventory)
+            onSnapshot(getPublicCollectionRef('items'), (snapshot) => {
+                currentData.items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderInventory();
+                renderSafetyStockSettings();
+                console.log("Inventory updated.");
+            });
+
+            // 3. Cleaning Requests Listener
+            onSnapshot(query(getPublicCollectionRef('cleaning_requests'), orderBy('requested_at', 'desc')), (snapshot) => {
+                currentData.requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCleaningRequests();
+                console.log("Requests updated.");
+            });
+
+            // Note: Transactions listener will only be used by the reporting function.
+        };
+
+        // --- Rendering Functions ---
+
+        const renderWeeklySchedule = () => {
+            const container = document.getElementById('schedule-display');
+            container.innerHTML = '';
+            if (currentData.settings && currentData.settings.weekly_schedule) {
+                const schedule = currentData.settings.weekly_schedule;
+                schedule.forEach((line, index) => {
+                    if (index < 10) { // Limit to 10 lines
+                        const p = document.createElement('p');
+                        p.className = 'text-gray-700 p-1 border-b border-gray-100';
+                        p.textContent = line;
+                        container.appendChild(p);
+                    }
+                });
+                if (schedule.length === 0) {
+                     container.innerHTML = '<p class="text-gray-400 italic">No weekly schedule set.</p>';
+                }
+            } else {
+                container.innerHTML = '<p class="text-gray-400 italic">No weekly schedule set.</p>';
+            }
+        };
+
+        const renderInventory = () => {
+            const consumablesContainer = document.getElementById('consumables-list');
+            const chemicalsContainer = document.getElementById('chemicals-list');
+            consumablesContainer.innerHTML = '';
+            chemicalsContainer.innerHTML = '';
+
+            currentData.items.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+                const isReorderNeeded = item.current_stock < item.safety_stock;
+                const alertClass = isReorderNeeded ? 'border-red-500 bg-red-50 ring-2 ring-red-500' : 'border-gray-200 bg-white';
+                const alertBadge = isReorderNeeded ? 
+                    `<span class="text-xs font-bold px-2 py-1 bg-red-500 text-white rounded-full">REORDER: ${item.reorder_qty || 'N/A'}</span>` : '';
+                
+                const itemHtml = `
+                    <div onclick="showAuthModal('${item.id}')" 
+                         class="p-4 rounded-xl shadow-md cursor-pointer hover:shadow-lg transition duration-200 ${alertClass}">
+                        <div class="flex justify-between items-start">
+                            <p class="text-lg font-semibold text-gray-800">${item.name}</p>
+                            ${alertBadge}
+                        </div>
+                        <p class="text-3xl font-bold text-blue-600 mt-2">${item.current_stock}</p>
+                        <p class="text-sm text-gray-500">Current Stock (Safety: ${item.safety_stock})</p>
+                    </div>
+                `;
+
+                if (item.type === 1) { // Consumables
+                    consumablesContainer.innerHTML += itemHtml;
+                } else if (item.type === 2) { // Chemicals
+                    chemicalsContainer.innerHTML += itemHtml;
+                }
             });
         };
-        
-        /**
-         * Submits a new cleaning request (public access).
-         */
-        window.submitCleaningRequest = async () => {
-            const message = document.getElementById('request-message').value.trim();
-            const photoInput = document.getElementById('request-photo-input');
+
+        const renderCleaningRequests = () => {
+            const container = document.getElementById('requests-list');
+            container.innerHTML = '';
+
+            if (currentData.requests.length === 0) {
+                 container.innerHTML = '<p class="text-gray-400 italic">No cleaning requests found.</p>';
+                 return;
+            }
+
+            currentData.requests.forEach(req => {
+                let statusClass = '';
+                let statusText = '';
+                if (req.status === 'New') {
+                    statusClass = 'bg-blue-100 text-blue-800';
+                    statusText = 'New Request';
+                } else if (req.status === 'In Progress') {
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = 'In Progress';
+                } else if (req.status === 'Completed') {
+                    statusClass = 'bg-green-100 text-green-800';
+                    statusText = 'Completed';
+                }
+
+                const date = req.requested_at ? new Date(req.requested_at.seconds * 1000).toLocaleString() : 'N/A';
+
+                container.innerHTML += `
+                    <div onclick="showRequestDetailsModal('${req.id}')" class="p-4 border rounded-xl shadow-sm hover:shadow-md transition duration-200 cursor-pointer flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-gray-800 line-clamp-1">${req.request_message}</p>
+                            <p class="text-sm text-gray-500">Requested: ${date}</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-medium rounded-full ${statusClass}">${statusText}</span>
+                    </div>
+                `;
+            });
+        };
+
+        // --- Authentication Logic ---
+
+        const checkPassword = (inputPw) => {
+            const settings = currentData.settings;
+            if (!settings) return null; // Data not loaded
+
+            const isAdmin = inputPw === settings.admin_password_mock;
+            const isSupervisor = inputPw === settings.supervisor_password_mock;
+
+            if (isAdmin) return 'Admin';
+            if (isSupervisor) return 'Supervisor';
+            return null; // Failed
+        };
+
+        // --- Generic Password Modal Logic ---
+
+        let passwordCallback = null;
+
+        const showPasswordModal = (title, callback) => {
+            document.getElementById('password-modal-title').textContent = title;
+            document.getElementById('auth-password-input').value = '';
+            document.getElementById('auth-error-message').classList.add('hidden');
+            document.getElementById('password-modal').classList.remove('hidden');
+            passwordCallback = callback;
+        };
+
+        const hidePasswordModal = () => {
+            document.getElementById('password-modal').classList.add('hidden');
+            passwordCallback = null;
+        };
+
+        document.getElementById('auth-confirm-button').onclick = () => {
+            const inputPw = document.getElementById('auth-password-input').value;
+            const role = checkPassword(inputPw);
+
+            if (role && passwordCallback) {
+                hidePasswordModal();
+                passwordCallback(role);
+            } else {
+                document.getElementById('auth-error-message').classList.remove('hidden');
+            }
+        };
+
+        // --- Inventory Transaction Logic ---
+
+        window.showAuthModal = (itemId) => {
+            currentItemForTransaction = currentData.items.find(item => item.id === itemId);
+            if (!currentItemForTransaction) return;
+
+            showPasswordModal(`Authorize Stock for ${currentItemForTransaction.name}`, (role) => {
+                if (role === 'Admin' || role === 'Supervisor') {
+                    showTransactionModal();
+                } else {
+                    console.error('Unauthorized attempt.');
+                }
+            });
+        };
+
+        window.showTransactionModal = () => {
+            document.getElementById('transaction-item-name').textContent = currentItemForTransaction.name;
+            document.getElementById('transaction-modal').classList.remove('hidden');
+            document.getElementById('transaction-quantity').value = '';
+            document.getElementById('transaction-error').classList.add('hidden');
+            setTransactionType(null); // Reset buttons
+        };
+
+        window.hideTransactionModal = () => {
+            document.getElementById('transaction-modal').classList.add('hidden');
+            currentItemForTransaction = null;
+            currentTransactionType = null;
+        };
+
+        window.setTransactionType = (type) => {
+            currentTransactionType = type;
+            const inBtn = document.getElementById('in-btn');
+            const outBtn = document.getElementById('out-btn');
+            
+            inBtn.classList.remove('ring-2', 'ring-green-500');
+            outBtn.classList.remove('ring-2', 'ring-red-500');
+
+            if (type === 'in') inBtn.classList.add('ring-2', 'ring-green-500');
+            if (type === 'out') outBtn.classList.add('ring-2', 'ring-red-500');
+        };
+
+        window.recordTransaction = async () => {
+            const quantity = parseInt(document.getElementById('transaction-quantity').value);
+            const errorElement = document.getElementById('transaction-error');
+            errorElement.classList.add('hidden');
+
+            if (!currentTransactionType || isNaN(quantity) || quantity <= 0) {
+                errorElement.textContent = 'Please select IN/OUT and enter a valid quantity.';
+                errorElement.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const itemRef = doc(getPublicCollectionRef('items'), currentItemForTransaction.id);
+                    const itemSnap = await transaction.get(itemRef);
+                    if (!itemSnap.exists()) {
+                        throw "Item does not exist!";
+                    }
+
+                    const newStock = currentTransactionType === 'in'
+                        ? itemSnap.data().current_stock + quantity
+                        : itemSnap.data().current_stock - quantity;
+
+                    if (newStock < 0) {
+                        throw "Insufficient stock for OUT transaction.";
+                    }
+
+                    // 1. Update stock
+                    transaction.update(itemRef, { current_stock: newStock });
+
+                    // 2. Record transaction
+                    const transactionData = {
+                        item_id: currentItemForTransaction.id,
+                        item_name: currentItemForTransaction.name,
+                        type: currentTransactionType,
+                        quantity: quantity,
+                        current_stock_after: newStock,
+                        timestamp: serverTimestamp(),
+                        user_id: userId
+                    };
+                    transaction.set(doc(getPublicCollectionRef('transactions')), transactionData);
+                });
+
+                hideTransactionModal();
+                console.log("Transaction successfully committed!");
+            } catch (e) {
+                errorElement.textContent = e.message || e;
+                errorElement.classList.remove('hidden');
+                console.error("Transaction failed: ", e);
+            }
+        };
+
+        // --- Cleaning Request Logic ---
+
+        window.showRequestForm = () => {
+            document.getElementById('request-message-input').value = '';
+            document.getElementById('request-image-input').value = '';
+            document.getElementById('request-image-preview').innerHTML = '';
+            document.getElementById('request-modal').classList.remove('hidden');
+        };
+
+        window.hideRequestForm = () => {
+            document.getElementById('request-modal').classList.add('hidden');
+        };
+
+        window.submitNewRequest = async () => {
+            const message = document.getElementById('request-message-input').value.trim();
+            const files = document.getElementById('request-image-input').files;
             
             if (!message) {
-                window.showMessage('요청 메시지를 입력해 주세요.', 'error');
+                alert('Please enter a request message.');
                 return;
             }
 
+            // Mocking image URLs since real file uploads are not possible in this environment
+            const imageMocks = Array.from(files).slice(0, 5).map((file, index) => 
+                `https://placehold.co/100x100/A0E7E5/000?text=Req+Img+${index+1}`
+            );
+
+            const newRequest = {
+                status: 'New',
+                request_message: message,
+                request_images: imageMocks,
+                requested_at: serverTimestamp(),
+                completed_message: '',
+                completed_images: [],
+                approved_by: '',
+                completed_at: null
+            };
+
             try {
-                // Simulate file reading and get Base64 strings
-                const requestPhotos = [];
-                for (const file of Array.from(photoInput.files).slice(0, 5)) {
-                    // This is a simplified, non-awaiting way to get base64. 
-                    // For a fully robust solution, use Promises and async/await.
-                    const base64 = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result.split(',')[1]);
-                        reader.readAsDataURL(file);
+                await addDoc(getPublicCollectionRef('cleaning_requests'), newRequest);
+                hideRequestForm();
+            } catch (error) {
+                console.error("Error submitting request:", error);
+            }
+        };
+
+        // Image Preview & Full View
+        window.previewImages = (type) => {
+            const inputId = type === 'request' ? 'request-image-input' : 'completion-image-input';
+            const previewId = type === 'request' ? 'request-image-preview' : 'completion-image-preview';
+            const files = document.getElementById(inputId).files;
+            const previewContainer = document.getElementById(previewId);
+            
+            previewContainer.innerHTML = '';
+            Array.from(files).slice(0, 5).forEach((file, index) => {
+                const imgUrl = URL.createObjectURL(file);
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.className = 'w-16 h-16 object-cover rounded-md cursor-pointer';
+                img.onclick = () => showFullImageModal(imgUrl);
+                previewContainer.appendChild(img);
+            });
+        };
+
+        window.showFullImageModal = (src) => {
+            document.getElementById('full-image-display').src = src;
+            document.getElementById('full-image-modal').classList.remove('hidden');
+        };
+        window.hideFullImageModal = () => {
+            document.getElementById('full-image-modal').classList.add('hidden');
+        };
+
+        window.showRequestDetailsModal = (docId) => {
+            currentRequestDocId = docId;
+            const req = currentData.requests.find(r => r.id === docId);
+            if (!req) return;
+
+            // Reset UI
+            document.getElementById('details-request-id').textContent = `Request ID: ${docId.substring(0, 8)}...`;
+            document.getElementById('completion-form').classList.add('hidden');
+            document.getElementById('completed-details').classList.add('hidden');
+            document.getElementById('approve-btn').classList.add('hidden');
+
+            // Populate details
+            document.getElementById('details-status').textContent = req.status;
+            document.getElementById('details-timestamp').textContent = req.requested_at ? new Date(req.requested_at.seconds * 1000).toLocaleString() : 'N/A';
+            document.getElementById('details-request-message').textContent = req.request_message;
+
+            const renderImages = (containerId, images) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = images.length > 0 ? '' : '<p class="text-sm italic text-gray-400">No photos attached.</p>';
+                images.forEach(url => {
+                    container.innerHTML += `<img src="${url}" onerror="this.onerror=null;this.src='https://placehold.co/100x100/ccc/000?text=Image+Error'" class="w-20 h-20 object-cover rounded-md cursor-pointer" onclick="showFullImageModal('${url}')">`;
+                });
+            };
+            renderImages('details-request-images', req.request_images || []);
+            
+            // Handle Status
+            if (req.status === 'New') {
+                document.getElementById('approve-btn').classList.remove('hidden');
+            } else if (req.status === 'In Progress') {
+                document.getElementById('completion-form').classList.remove('hidden');
+            } else if (req.status === 'Completed') {
+                document.getElementById('completed-details').classList.remove('hidden');
+                document.getElementById('details-completion-message').textContent = req.completed_message || 'No message provided.';
+                renderImages('details-completion-images', req.completed_images || []);
+            }
+
+            document.getElementById('request-details-modal').classList.remove('hidden');
+        };
+
+        window.hideRequestDetailsModal = () => {
+            document.getElementById('request-details-modal').classList.add('hidden');
+            currentRequestDocId = null;
+        };
+        
+        window.approveRequest = () => {
+             showPasswordModal('Authorize Request Approval', async (role) => {
+                if (role === 'Admin' || role === 'Supervisor') {
+                    await updateDoc(doc(getPublicCollectionRef('cleaning_requests'), currentRequestDocId), { 
+                        status: 'In Progress',
+                        approved_by: userId 
                     });
-                    requestPhotos.push(base64);
-                }
-                
-                const requestsCollectionRef = getPublicCollectionRef('cleaning_requests');
-
-                await addDoc(requestsCollectionRef, {
-                    requestMessage: message,
-                    requestPhotos: requestPhotos,
-                    status: '대기', // '대기', '작업중', '완료'
-                    timestamp: new Date(),
-                });
-
-                document.getElementById('request-message').value = '';
-                photoInput.value = '';
-                document.getElementById('request-preview').innerHTML = '';
-                window.showMessage('청소 요청이 성공적으로 제출되었습니다.', 'success');
-
-            } catch (error) {
-                console.error("Error adding cleaning request:", error);
-                window.showMessage(`요청 제출 오류: ${error.message}`, 'error');
-            }
-        };
-
-        /**
-         * Updates request status to '작업중' (Supervisor/Admin only).
-         */
-        window.updateRequestStatus = async (requestId, newStatus) => {
-            try {
-                // 6 segments path: artifacts/{appId}/public/data/cleaning_requests/{requestId} (Correct for Document)
-                const requestRef = getPublicConfigDocRef('cleaning_requests', requestId); 
-                await updateDoc(requestRef, { status: newStatus });
-                window.showMessage(`상태가 ${newStatus}로 변경되었습니다.`, 'success');
-            } catch (error) {
-                console.error("Error updating request status:", error);
-                window.showMessage(`상태 업데이트 오류: ${error.message}`, 'error');
-            }
-        };
-
-        /**
-         * Opens the form to complete a request.
-         */
-        window.openCompletionForm = (requestId) => {
-            const request = window.state.requests.find(r => r.id === requestId);
-            
-            // Temporary simple modal for completion input
-            const completionMessage = prompt(`요청 완료: [${request.requestMessage.substring(0, 20)}...]\n\n완료 메시지를 입력하세요:`);
-            
-            if (completionMessage !== null) {
-                // In a proper app, this would be a full modal with file upload inputs.
-                // For this simple example, we ask for a simulated photo count.
-                let photoCount = 0;
-                let validCount = false;
-                while (!validCount) {
-                    const countInput = prompt('최대 5개의 완료 사진을 첨부할 수 있습니다. 몇 개의 사진을 첨부하시겠습니까? (0에서 5 사이의 숫자 입력)');
-                    photoCount = parseInt(countInput);
-                    if (isNaN(photoCount) || photoCount < 0 || photoCount > 5) {
-                        alert('0에서 5 사이의 유효한 숫자를 입력하세요.');
-                    } else {
-                        validCount = true;
-                    }
-                }
-                
-                // Simplified Base64 Placeholder
-                const completionPhotos = Array(photoCount).fill(`DEMO_COMPLETION_BASE64_${requestId}_`);
-                
-                window.checkPassword('supervisor', () => completeRequest(requestId, completionMessage, completionPhotos));
-            }
-        };
-        
-        /**
-         * Marks a request as complete with photos and message (Supervisor/Admin only).
-         */
-        window.completeRequest = async (requestId, completionMessage, completionPhotos) => {
-             try {
-                // 6 segments path: artifacts/{appId}/public/data/cleaning_requests/{requestId} (Correct for Document)
-                const requestRef = getPublicConfigDocRef('cleaning_requests', requestId);
-                await updateDoc(requestRef, { 
-                    status: '완료',
-                    completionMessage: completionMessage,
-                    completionPhotos: completionPhotos,
-                    completedAt: new Date(),
-                });
-                window.showMessage('작업 완료 보고서가 성공적으로 저장되었습니다.', 'success');
-            } catch (error) {
-                console.error("Error completing request:", error);
-                window.showMessage(`완료 오류: ${error.message}`, 'error');
-            }
-        };
-
-        /**
-         * [수정] Inventory In/Out Modal을 열기 전에 비밀번호를 확인하도록 로직을 변경합니다.
-         */
-        window.openIOModal = (itemId, itemName) => {
-            // 1. Inventory 작업 시작 시 context 설정 (아이템 정보 저장)
-            window.state.inventoryActionContext = { itemId, itemName };
-            
-            // 2. IO 모달을 열지 않고, 바로 비밀번호 확인을 요청합니다.
-            // 성공 시 콜백(openIOModalAfterPasswordSuccess)이 IO 모달을 엽니다.
-            window.checkPassword('supervisor', window.openIOModalAfterPasswordSuccess);
-        };
-        
-        /**
-         * [신규] 비밀번호 확인에 성공한 후, Inventory In/Out Modal을 엽니다.
-         */
-        window.openIOModalAfterPasswordSuccess = () => {
-            const context = window.state.inventoryActionContext;
-            if (!context) return;
-            
-            document.getElementById('io-modal-title').textContent = `${context.itemName} 입/출고`;
-            document.getElementById('io-item-name').textContent = context.itemName;
-            document.getElementById('io-quantity').value = 1;
-            document.getElementById('io-memo').value = '';
-
-            // Localize Modal Content
-            document.querySelector('#io-modal label[for="io-type"]').textContent = '구분';
-            document.querySelector('#io-modal option[value="in"]').textContent = '입고';
-            document.querySelector('#io-modal option[value="out"]').textContent = '출고';
-            document.querySelector('#io-modal label[for="io-quantity"]').textContent = '수량';
-            document.getElementById('io-quantity').placeholder = '수량 입력';
-            document.querySelector('#io-modal label[for="io-memo"]').textContent = '메모 (선택)';
-            document.getElementById('io-memo').placeholder = '간단한 메모';
-            document.querySelector('#io-modal button:last-child').textContent = '저장';
-            document.querySelector('#io-modal button:first-child').textContent = '취소';
-            document.querySelector('#io-modal p.text-gray-600').innerHTML = `현재 항목: <span id="io-item-name" class="font-semibold text-blue-600">${context.itemName}</span>`;
-
-
-            const modal = document.getElementById('io-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        };
-
-        window.closeIOModal = () => {
-            document.getElementById('io-modal').classList.remove('flex');
-            document.getElementById('io-modal').classList.add('hidden');
-            // Inventory 작업 종료 시 context 해제
-            window.state.inventoryActionContext = null;
-        };
-
-        /**
-         * Performs the actual inventory log action (called directly by the IO modal's '저장' button).
-         * 비밀번호는 이미 확인되었으므로 바로 로직을 수행합니다.
-         */
-        window.executeInventoryLog = async () => {
-            const context = window.state.inventoryActionContext;
-            if (!context) {
-                window.showMessage('재고 항목 정보가 유효하지 않습니다.', 'error');
-                closeIOModal();
-                return;
-            }
-
-            const type = document.getElementById('io-type').value;
-            const quantity = parseInt(document.getElementById('io-quantity').value);
-            const memo = document.getElementById('io-memo').value;
-
-            if (isNaN(quantity) || quantity <= 0) {
-                window.showMessage('유효한 수량을 입력해 주세요.', 'error');
-                return;
-            }
-            
-            // 출고 시 재고 확인 (간단한 클라이언트 측 검증)
-            if (type === 'out') {
-                const currentStock = window.state.inventory[context.itemId] || 0;
-                if (quantity > currentStock) {
-                    window.showMessage(`현재 재고(${currentStock})보다 많은 수량(${quantity})을 출고할 수 없습니다.`, 'error');
-                    return;
-                }
-            }
-
-
-            try {
-                const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
-
-                await addDoc(collection(userDocRef, 'itac_inventory_logs'), {
-                    itemId: context.itemId,
-                    itemName: context.itemName,
-                    type: type, // 'in' or 'out'
-                    quantity: quantity,
-                    memo: memo,
-                    timestamp: new Date(),
-                });
-
-                window.showMessage(`${context.itemName} ${type === 'in' ? '입고' : '출고'} ${quantity}개가 성공적으로 기록되었습니다.`, 'success');
-                closeIOModal(); 
-
-            } catch (error) {
-                console.error("Error recording inventory log:", error);
-                window.showMessage(`재고 기록 오류: ${error.message}`, 'error');
-            }
-        };
-        
-        // --- Settings Action Functions (Admin Only) ---
-        
-        /**
-         * Updates Admin/Supervisor Passwords.
-         */
-        window.updatePasswords = async () => {
-            const adminPw = document.getElementById('admin-pw').value;
-            const supervisorPw = document.getElementById('supervisor-pw').value;
-            
-            const newPasswords = { ...window.state.settings.passwords };
-            let changes = false;
-            
-            if (adminPw) {
-                newPasswords.admin = adminPw;
-                changes = true;
-            }
-            if (supervisorPw) {
-                newPasswords.supervisor = supervisorPw;
-                changes = true;
-            }
-
-            if (!changes) {
-                window.showMessage('변경할 비밀번호를 입력해 주세요.', 'info');
-                return;
-            }
-            
-            try {
-                const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
-                await updateDoc(userDocRef, { passwords: newPasswords });
-                window.showMessage('비밀번호가 성공적으로 업데이트되었습니다.', 'success');
-                document.getElementById('admin-pw').value = '';
-                document.getElementById('supervisor-pw').value = '';
-            } catch (error) {
-                console.error("Error updating passwords:", error);
-                window.showMessage(`비밀번호 업데이트 오류: ${error.message}`, 'error');
-            }
-        };
-
-        /**
-         * Updates Weekly Plan.
-         */
-        window.updateWeeklyPlan = async () => {
-            const newPlan = [];
-            for (let i = 0; i < 10; i++) {
-                const day = document.getElementById(`plan-day-${i}`).value;
-                const task = document.getElementById(`plan-task-${i}`).value;
-                newPlan.push({ day, task });
-            }
-            
-            try {
-                // Use the 6-segment config document path
-                const planDocRef = getPublicConfigDocRef('itac_plan');
-                await setDoc(planDocRef, { weeklyPlan: newPlan });
-                window.showMessage('주간 청소 계획이 성공적으로 저장되었습니다.', 'success');
-            } catch (error) {
-                console.error("Error updating weekly plan:", error);
-                window.showMessage(`계획 업데이트 오류: ${error.message}`, 'error');
-            }
-        };
-        
-        /**
-         * Updates Safety Stock Levels.
-         */
-        window.updateSafetyStock = async () => {
-            const allItems = [...window.state.settings.consumables, ...window.state.settings.supplies];
-            const newLevels = {};
-            
-            allItems.forEach(item => {
-                const input = document.getElementById(`safety-stock-${item.id}`);
-                const value = parseInt(input.value);
-                if (!isNaN(value) && value >= 0) {
-                    newLevels[item.id] = value;
+                    hideRequestDetailsModal();
+                } else {
+                    console.error('Unauthorized approval attempt.');
                 }
             });
-            
+        };
+        
+        window.completeRequest = () => {
+            showPasswordModal('Authorize Task Completion', async (role) => {
+                if (role === 'Admin' || role === 'Supervisor') {
+                    const message = document.getElementById('completion-message-input').value.trim();
+                    const files = document.getElementById('completion-image-input').files;
+
+                    // Mocking completion image URLs
+                    const completionImageMocks = Array.from(files).slice(0, 5).map((file, index) => 
+                        `https://placehold.co/100x100/00C9A7/000?text=Comp+Img+${index+1}`
+                    );
+
+                    await updateDoc(doc(getPublicCollectionRef('cleaning_requests'), currentRequestDocId), { 
+                        status: 'Completed',
+                        completed_message: message,
+                        completed_images: completionImageMocks,
+                        completed_at: serverTimestamp()
+                    });
+                    hideRequestDetailsModal();
+                } else {
+                    console.error('Unauthorized completion attempt.');
+                }
+            });
+        };
+
+        // --- Settings Logic (Admin Only) ---
+
+        window.showSettingsModal = () => {
+             showPasswordModal('Administrator Access Required', (role) => {
+                if (role === 'Admin') {
+                    document.getElementById('settings-modal').classList.remove('hidden');
+                    // Load current settings data into inputs
+                    if (currentData.settings) {
+                        document.getElementById('weekly-plan-input').value = currentData.settings.weekly_schedule ? currentData.settings.weekly_schedule.join('\n') : '';
+                    }
+                } else {
+                    console.error('Unauthorized settings access attempt.');
+                }
+            });
+        };
+        
+        window.hideSettingsModal = () => {
+            document.getElementById('settings-modal').classList.add('hidden');
+        };
+
+        window.saveWeeklyPlan = async () => {
+            const planText = document.getElementById('weekly-plan-input').value.trim();
+            const scheduleArray = planText.split('\n').filter(line => line.trim() !== '');
+
             try {
-                // Use the 6-segment config document path
-                const safetyStockDocRef = getPublicConfigDocRef('itac_safety_stock');
-                await setDoc(safetyStockDocRef, { levels: newLevels });
-                window.showMessage('안전 재고 수준이 성공적으로 저장되었습니다.', 'success');
+                 await updateDoc(getPrivateDocRef('app_settings'), {
+                    weekly_schedule: scheduleArray
+                });
+                alert('Weekly Cleaning Plan updated successfully!'); // Use alert() here as it is inside the settings modal
             } catch (error) {
-                console.error("Error updating safety stock:", error);
-                window.showMessage(`안전 재고 업데이트 오류: ${error.message}`, 'error');
+                console.error("Error saving weekly plan:", error);
             }
         };
 
+        const renderSafetyStockSettings = () => {
+            const container = document.getElementById('settings-safety-stock-list');
+            container.innerHTML = '';
 
-        /**
-         * Adds a new inventory item.
-         */
-        window.addInventoryItem = async () => {
-            const name = document.getElementById('new-item-name').value.trim();
-            const category = document.getElementById('new-item-category').value;
-            const reorderLevel = parseInt(document.getElementById('new-item-reorder-level').value);
+            currentData.items.sort((a, b) => a.name.localeCompare(b.name)).forEach(item => {
+                container.innerHTML += `
+                    <div class="p-3 border rounded-lg bg-gray-50">
+                        <label class="block text-sm font-medium text-gray-700">${item.name}</label>
+                        <input type="number" id="safety-${item.id}" value="${item.safety_stock}" onchange="updateSafetyStock('${item.id}', this.value)" class="w-full p-2 mt-1 border rounded-lg text-sm" placeholder="Safety Stock">
+                        <input type="number" id="reorder-${item.id}" value="${item.reorder_qty}" onchange="updateReorderQty('${item.id}', this.value)" class="w-full p-2 mt-1 border rounded-lg text-sm" placeholder="Reorder Quantity">
+                    </div>
+                `;
+            });
 
-            if (!name || isNaN(reorderLevel) || reorderLevel < 0) {
-                window.showMessage('항목 이름과 재주문 수량을 정확히 입력해 주세요.', 'error');
-                return;
-            }
+             renderItemManagementLists();
+        };
+        
+        const renderItemManagementLists = () => {
+            const consumablesList = document.getElementById('settings-consumables-list');
+            const chemicalsList = document.getElementById('settings-chemicals-list');
+            consumablesList.innerHTML = '';
+            chemicalsList.innerHTML = '';
             
-            // Generate a simple ID
-            const itemId = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now().toString().slice(-4);
-            const newItem = { id: itemId, name, category, reorderLevel };
-
-            const currentList = window.state.settings[category];
-            if (currentList.some(item => item.name === name)) {
-                window.showMessage('항목 이름이 이미 존재합니다.', 'error');
-                return;
-            }
-            
-            const newList = [...currentList, newItem];
-            
-            try {
-                const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
-                await updateDoc(userDocRef, { [category]: newList });
+            currentData.items.forEach(item => {
+                const deleteBtn = `<button onclick="deleteItem('${item.id}')" class="ml-3 text-red-500 hover:text-red-700 text-sm">Delete</button>`;
+                const itemHtml = `<div class="flex items-center justify-between p-2 bg-white border rounded-lg"><span class="font-medium">${item.name}</span>${deleteBtn}</div>`;
                 
-                document.getElementById('new-item-name').value = '';
-                document.getElementById('new-item-reorder-level').value = '10';
-                window.showMessage(`${name} (${category === 'consumable' ? '소모품' : '청소 용품'}) 항목이 추가되었습니다.`, 'success');
+                if (item.type === 1) consumablesList.innerHTML += itemHtml;
+                if (item.type === 2) chemicalsList.innerHTML += itemHtml;
+            });
+        };
+
+        window.updateSafetyStock = async (itemId, value) => {
+            const newStock = parseInt(value);
+            if (!isNaN(newStock) && newStock >= 0) {
+                 await updateDoc(doc(getPublicCollectionRef('items'), itemId), { safety_stock: newStock });
+            }
+        };
+
+        window.updateReorderQty = async (itemId, value) => {
+            const newQty = parseInt(value);
+            if (!isNaN(newQty) && newQty >= 0) {
+                 await updateDoc(doc(getPublicCollectionRef('items'), itemId), { reorder_qty: newQty });
+            }
+        };
+        
+        window.addItem = async (type) => {
+            const inputId = type === 'consumable' ? 'new-consumable-name' : 'new-chemical-name';
+            const name = document.getElementById(inputId).value.trim();
+            if (!name) return;
+
+            const newItem = {
+                id: name.toLowerCase().replace(/[^a-z0-9]/g, '_'), // Generate ID
+                name: name,
+                type: type === 'consumable' ? 1 : 2,
+                current_stock: 0,
+                safety_stock: 10,
+                reorder_qty: 50,
+            };
+
+            try {
+                await setDoc(doc(getPublicCollectionRef('items'), newItem.id), newItem);
+                document.getElementById(inputId).value = '';
             } catch (error) {
                 console.error("Error adding item:", error);
-                window.showMessage(`항목 추가 오류: ${error.message}`, 'error');
             }
         };
 
-        /**
-         * Deletes an inventory item.
-         */
-        window.deleteInventoryItem = async (itemId, category) => {
-            window.checkPassword('admin', async () => {
-                const currentList = window.state.settings[category];
-                const newList = currentList.filter(item => item.id !== itemId);
-                
-                if (newList.length === currentList.length) {
-                    window.showMessage('항목을 찾을 수 없습니다.', 'error');
-                    return;
-                }
-                
+        window.deleteItem = async (itemId) => {
+            if (confirm(`Are you sure you want to delete this item? This action is irreversible.`)) {
                 try {
-                    const userDocRef = doc(window.db, 'artifacts', appId, 'users', window.userId);
-                    await updateDoc(userDocRef, { [category]: newList });
-                    window.showMessage(`항목이 성공적으로 삭제되었습니다.`, 'success');
+                    await deleteDoc(doc(getPublicCollectionRef('items'), itemId));
                 } catch (error) {
                     console.error("Error deleting item:", error);
-                    window.showMessage(`항목 삭제 오류: ${error.message}`, 'error');
                 }
-            });
+            }
         };
-        
-        // --- Reports Action Functions ---
 
-        /**
-         * Filters the inventory logs based on selected date range.
-         */
-        window.filterLogs = () => {
-            const startDateStr = document.getElementById('report-start-date').value;
-            const endDateStr = document.getElementById('report-end-date').value;
-            const container = document.getElementById('report-table-container');
+        window.changePasswords = async () => {
+            const currentAdminPw = document.getElementById('current-admin-pw').value;
+            const newAdminPw = document.getElementById('new-admin-pw').value;
+            const newSupervisorPw = document.getElementById('new-supervisor-pw').value;
 
-            let filteredLogs = window.state.inventoryLogs;
-
-            if (startDateStr) {
-                const startTimestamp = new Date(startDateStr).getTime();
-                filteredLogs = filteredLogs.filter(log => new Date(log.timestamp.seconds * 1000).getTime() >= startTimestamp);
+            if (currentAdminPw !== currentData.settings.admin_password_mock) {
+                alert('Current Admin Password is incorrect.');
+                return;
             }
+
+            const updates = {};
+            if (newAdminPw) updates.admin_password_mock = newAdminPw;
+            if (newSupervisorPw) updates.supervisor_password_mock = newSupervisorPw;
+
+            if (Object.keys(updates).length > 0) {
+                 await updateDoc(getPrivateDocRef('app_settings'), updates);
+                alert('Passwords updated successfully!');
+            } else {
+                alert('No new passwords were entered.');
+            }
+        };
+
+
+        // --- Reports Logic ---
+        window.generateReport = async () => {
+            const start = document.getElementById('report-start-date').value;
+            const end = document.getElementById('report-end-date').value;
+            const output = document.getElementById('report-output');
+
+            if (!start || !end) {
+                output.innerHTML = '<p class="text-red-500">Please select both start and end dates.</p>';
+                return;
+            }
+
+            const startDate = Timestamp.fromDate(new Date(start));
+            const endDate = Timestamp.fromDate(new Date(new Date(end).setHours(23, 59, 59, 999))); // End of day
+
+            const transactionsRef = getPublicCollectionRef('transactions');
+            const q = query(
+                transactionsRef,
+                where('timestamp', '>=', startDate),
+                where('timestamp', '<=', endDate),
+                orderBy('timestamp', 'desc')
+            );
             
-            if (endDateStr) {
-                // Set end date to midnight of the next day to include the entire end day
-                const endDate = new Date(endDateStr);
-                endDate.setDate(endDate.getDate() + 1);
-                const endTimestamp = endDate.getTime();
-                
-                filteredLogs = filteredLogs.filter(log => new Date(log.timestamp.seconds * 1000).getTime() < endTimestamp);
+            const querySnapshot = await getDocs(q);
+            const transactions = querySnapshot.docs.map(doc => doc.data());
+
+            if (transactions.length === 0) {
+                output.innerHTML = '<p class="text-gray-500 italic">No transactions found in the selected period.</p>';
+                return;
             }
 
-            container.innerHTML = `
-                <h3 class="text-xl font-semibold mb-3 text-gray-700">기간별 재고 기록 (${startDateStr || '전체'} ~ ${endDateStr || '전체'})</h3>
-                ${renderLogTable(filteredLogs)}
+            let tableHtml = `
+                <table id="report-table" class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Item</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Type</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Qty</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Stock After</th>
+                            <th class="px-3 py-2 text-left font-medium text-gray-600">Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
             `;
-            lucide.createIcons();
-        };
 
-
-        /**
-         * Simulates Excel export functionality.
-         */
-        window.exportToExcel = () => {
-             // In a real application, you'd use a library like SheetJS or create a proper CSV/XLSX file.
-             // Here, we simulate by collecting the log data and prompting a copy.
-            
-            window.checkPassword('supervisor', () => {
-                const logs = window.state.inventoryLogs; // Use all logs for export simulation
-                
-                const header = ["날짜", "항목", "구분", "수량", "메모"].join('\t');
-                const rows = logs.map(log => [
-                    new Date(log.timestamp.seconds * 1000).toLocaleDateString('ko-KR'),
-                    log.itemName,
-                    log.type === 'in' ? '입고' : '출고',
-                    log.quantity,
-                    log.memo || '-'
-                ].join('\t'));
-
-                const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [header, ...rows].join('\n');
-                
-                // Simulate download
-                const link = document.createElement('a');
-                link.setAttribute('href', csvContent);
-                link.setAttribute('download', 'ITAC_Inventory_Report.csv');
-                document.body.appendChild(link); // Required for Firefox
-                link.click();
-                document.body.removeChild(link);
-                
-                window.showMessage('Excel 파일 다운로드가 시작되었습니다 (CSV 형식).', 'info');
+            transactions.forEach(t => {
+                const dateString = t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleString() : 'N/A';
+                const typeClass = t.type === 'in' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold';
+                tableHtml += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-3 py-2 whitespace-nowrap">${t.item_name}</td>
+                        <td class="px-3 py-2 whitespace-nowrap"><span class="${typeClass}">${t.type.toUpperCase()}</span></td>
+                        <td class="px-3 py-2 whitespace-nowrap">${t.quantity}</td>
+                        <td class="px-3 py-2 whitespace-nowrap">${t.current_stock_after}</td>
+                        <td class="px-3 py-2 whitespace-nowrap">${dateString}</td>
+                    </tr>
+                `;
             });
+
+            tableHtml += '</tbody></table>';
+            output.innerHTML = tableHtml;
         };
 
+        window.printReport = () => {
+            const printContents = document.getElementById('report-output').innerHTML;
+            const originalContents = document.body.innerHTML;
 
-        // --- Startup ---
-        window.onload = window.setupFirebase;
+            // Create a print-friendly window
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Inventory Report</title>');
+            printWindow.document.write('<style>body { font-family: sans-serif; padding: 20px; } table, th, td { border: 1px solid #ddd; border-collapse: collapse; padding: 8px; }</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h1 style="text-align: center;">Inventory Transaction Report</h1>');
+            printWindow.document.write(printContents);
+            printWindow.document.write('</body></html>');
+            
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+        };
+
+        window.exportToExcel = () => {
+            const table = document.getElementById('report-table');
+            if (!table) {
+                alert('Please generate a report first.');
+                return;
+            }
+
+            // Create a blob URL for the table data
+            const html = table.outerHTML;
+            const url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+            
+            // Create a temporary link element to trigger the download
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'Inventory_Report.xls');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
     </script>
 </body>
 </html>
