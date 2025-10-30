@@ -637,8 +637,16 @@
                 <input type="password" id="newAdminPassword" placeholder="Enter new admin password">
             </div>
             <div class="form-group">
+                <label>Confirm Admin Password</label>
+                <input type="password" id="confirmAdminPassword" placeholder="Re-enter new admin password">
+            </div>
+            <div class="form-group">
                 <label>New Supervisor Password</label>
                 <input type="password" id="newSupervisorPassword" placeholder="Enter new supervisor password">
+            </div>
+            <div class="form-group">
+                <label>Confirm Supervisor Password</label>
+                <input type="password" id="confirmSupervisorPassword" placeholder="Re-enter new supervisor password">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-danger" id="cancelPasswordManagementBtn">Cancel</button>
@@ -699,7 +707,7 @@
         let currentAction = null;
         let currentRequestKey = null;
         let requestImages = [];
-        let completedRequestImages = []; // NEW: Array for completed work images
+        let completedRequestImages = []; // Array for completed work images
         let currentManagementType = null;
         let safetyStockChanges = {};
         let pendingCompleteRequestKey = null; // For the completion flow
@@ -866,6 +874,7 @@
                                 currentRequestKey = key;
                                 document.getElementById('passwordModalTitle').textContent = 'Admin/Supervisor Authentication for Approval';
                                 document.getElementById('passwordModal').dataset.intendedAction = 'approve';
+                                document.getElementById('passwordInput').type = 'password';
                                 document.getElementById('passwordModal').classList.add('active');
                             } else if (action === 'complete') {
                                 // No password required for completion
@@ -876,6 +885,7 @@
                                 currentRequestKey = key;
                                 document.getElementById('passwordModalTitle').textContent = 'Admin/Supervisor Authentication for Deletion';
                                 document.getElementById('passwordModal').dataset.intendedAction = 'delete';
+                                document.getElementById('passwordInput').type = 'password';
                                 document.getElementById('passwordModal').classList.add('active');
                             }
                         });
@@ -941,7 +951,7 @@
         function openRequestModal() {
             document.getElementById('requestModal').classList.add('active');
             requestImages = [];
-            updateImagePreview();
+            updateImagePreview('requestImagePreview', requestImages);
             document.getElementById('requestMessage').value = '';
         }
 
@@ -954,12 +964,12 @@
             document.getElementById('fullImageModal').classList.add('active');
         }
 
-        // Update image preview with remove buttons (for New Request)
-        function updateImagePreview() {
-            const preview = document.getElementById('requestImagePreview');
+        // Update image preview with remove buttons (Reusable function)
+        function updateImagePreview(previewId, imageArray) {
+            const preview = document.getElementById(previewId);
             preview.innerHTML = '';
             
-            requestImages.forEach((img, index) => {
+            imageArray.forEach((img, index) => {
                 const div = document.createElement('div');
                 div.className = 'image-preview-item';
                 div.innerHTML = `
@@ -970,48 +980,16 @@
                 
                 // Add click listener to image for full preview
                 div.querySelector('img').addEventListener('click', () => showFullImage(img));
-            });
-            
-            // Add remove button listeners
-            preview.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const index = parseInt(this.dataset.index);
-                    requestImages.splice(index, 1);
-                    updateImagePreview();
-                });
-            });
-        }
-
-        // Update image preview with remove buttons (for Completed Request) - NEW
-        function updateCompletedImagePreview() {
-            const preview = document.getElementById('completedImagePreview');
-            preview.innerHTML = '';
-            
-            completedRequestImages.forEach((img, index) => {
-                const div = document.createElement('div');
-                div.className = 'image-preview-item';
-                div.innerHTML = `
-                    <img src="${img}" data-img="${img}">
-                    <div class="remove-btn" data-index="${index}">×</div>
-                `;
-                preview.appendChild(div);
                 
-                // Add click listener to image for full preview
-                div.querySelector('img').addEventListener('click', () => showFullImage(img));
-            });
-            
-            // Add remove button listeners
-            preview.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
+                // Add remove button listeners
+                div.querySelector('.remove-btn').addEventListener('click', function(e) {
                     e.stopPropagation();
-                    const index = parseInt(this.dataset.index);
-                    completedRequestImages.splice(index, 1);
-                    updateCompletedImagePreview();
+                    const idx = parseInt(this.dataset.index);
+                    imageArray.splice(idx, 1);
+                    updateImagePreview(previewId, imageArray); // Re-run preview for dynamic update
                 });
             });
         }
-
 
         // Request image handling
         document.getElementById('addMoreImagesBtn').addEventListener('click', function() {
@@ -1039,7 +1017,7 @@
                     requestImages.push(event.target.result);
                     processed++;
                     if (processed === filesToAdd.length) {
-                        updateImagePreview();
+                        updateImagePreview('requestImagePreview', requestImages);
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1049,7 +1027,7 @@
             e.target.value = '';
         });
         
-        // Completed Request image handling - NEW
+        // Completed Request image handling
         document.getElementById('addCompletedImagesBtn').addEventListener('click', function() {
             if (completedRequestImages.length >= 5) {
                 alert('Maximum 5 images allowed');
@@ -1075,7 +1053,7 @@
                     completedRequestImages.push(event.target.result);
                     processed++;
                     if (processed === filesToAdd.length) {
-                        updateCompletedImagePreview();
+                        updateImagePreview('completedImagePreview', completedRequestImages);
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1086,7 +1064,7 @@
         });
 
 
-        // Submit request - MODIFIED
+        // Submit request
         async function submitRequest() {
             const message = document.getElementById('requestMessage').value.trim();
             
@@ -1108,7 +1086,7 @@
             closeModal('requestModal'); // Close modal after successful submission
         }
 
-        // Approve request - MODIFIED
+        // Approve request
         async function approveRequest(key, passwords) {
             const requestRef = ref(db, `requests/${key}`);
             await update(requestRef, { status: 'working' });
@@ -1116,16 +1094,16 @@
             currentRequestKey = null; // Clear key
         }
         
-        // Open Complete Request Modal - MODIFIED
+        // Open Complete Request Modal
         function openCompleteRequestModal() {
             document.getElementById('completeRequestModal').classList.add('active');
             // Reset state
             completedRequestImages = [];
-            updateCompletedImagePreview();
+            updateImagePreview('completedImagePreview', completedRequestImages);
             document.getElementById('completeRequestMemo').value = ''; // Clear memo
         }
         
-        // Submit Complete Request - MODIFIED
+        // Submit Complete Request
         document.getElementById('submitCompleteRequestBtn').addEventListener('click', async function() {
             if (!pendingCompleteRequestKey) {
                 alert('Error: No request selected for completion.');
@@ -1148,7 +1126,7 @@
         });
 
 
-        // Complete request - MODIFIED (to accept memo)
+        // Complete request
         async function completeRequest(key, completedImages, completedMemo) {
             const requestRef = ref(db, `requests/${key}`);
             await update(requestRef, {
@@ -1161,7 +1139,7 @@
             alert('Request marked as completed!');
         }
         
-        // Delete request - NEW
+        // Delete request
         async function deleteRequest(key) {
             if (confirm('Are you absolutely sure you want to permanently delete this request? This action cannot be undone.')) {
                 const requestRef = ref(db, `requests/${key}`);
@@ -1179,6 +1157,7 @@
             document.getElementById('inventoryItemName').textContent = name;
             document.getElementById('passwordModalTitle').textContent = 'Authentication Required for Inventory Update';
             document.getElementById('passwordModal').dataset.intendedAction = 'inventory';
+            document.getElementById('passwordInput').type = 'password'; // Explicitly ensure it is password type
             document.getElementById('passwordModal').classList.add('active');
         }
 
@@ -1195,7 +1174,8 @@
             
             closeModal('passwordModal');
             document.getElementById('passwordInput').value = '';
-            
+            document.getElementById('passwordInput').type = 'password'; // Reset type for security
+
             if (isAdminOrSupervisor) {
                 if (intendedAction === 'inventory') {
                     document.getElementById('inventoryModal').classList.add('active');
@@ -1206,6 +1186,13 @@
                 } else if (intendedAction === 'delete') {
                     if (currentRequestKey) {
                         await deleteRequest(currentRequestKey);
+                    }
+                } else if (intendedAction === 'settings') { // NEW: Handle settings action
+                    // Only Admin can proceed to settings
+                    if (password === passwords.admin) {
+                        document.getElementById('settingsModal').classList.add('active');
+                    } else {
+                        alert('Only Admin can access settings!');
                     }
                 }
             } else {
@@ -1261,16 +1248,14 @@
 
         // Settings functions
         async function openSettingsMenu() {
-            const passwordsRef = ref(db, 'passwords');
-            const snapshot = await get(passwordsRef);
-            const passwords = snapshot.val();
-            
-            const password = prompt('Enter Admin Password:');
-            if (password === passwords.admin) {
-                document.getElementById('settingsModal').classList.add('active');
-            } else {
-                alert('Invalid password!');
-            }
+            // MODIFIED: Use password modal instead of prompt()
+            currentAction = null; // Clear any pending action
+            currentRequestKey = null; // Clear request key
+            document.getElementById('passwordModalTitle').textContent = 'Admin Authentication for Settings';
+            document.getElementById('passwordModal').dataset.intendedAction = 'settings'; // Set new action type
+            document.getElementById('passwordInput').type = 'password'; // Ensure input type is password
+            document.getElementById('passwordInput').value = ''; // Clear previous value
+            document.getElementById('passwordModal').classList.add('active');
         }
 
         async function openScheduleSettings() {
@@ -1454,12 +1439,19 @@
 
         async function openPasswordSettings() {
             closeModal('settingsModal');
+            // Clear inputs when opening
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('confirmAdminPassword').value = ''; // ADDED: Clear confirmation field
+            document.getElementById('newSupervisorPassword').value = '';
+            document.getElementById('confirmSupervisorPassword').value = ''; // ADDED: Clear confirmation field
             document.getElementById('passwordManagementModal').classList.add('active');
         }
 
         async function savePasswords() {
             const newAdmin = document.getElementById('newAdminPassword').value;
+            const confirmAdmin = document.getElementById('confirmAdminPassword').value; // ADDED: Get confirmation value
             const newSupervisor = document.getElementById('newSupervisorPassword').value;
+            const confirmSupervisor = document.getElementById('confirmSupervisorPassword').value; // ADDED: Get confirmation value
             
             if (!newAdmin && !newSupervisor) {
                 alert('Please enter at least one new password');
@@ -1468,14 +1460,43 @@
             
             const passwordsRef = ref(db, 'passwords');
             const updates = {};
-            if (newAdmin) updates.admin = newAdmin;
-            if (newSupervisor) updates.supervisor = newSupervisor;
+            let hasError = false;
+
+            // Check Admin Password for mismatch
+            if (newAdmin) {
+                if (newAdmin !== confirmAdmin) {
+                    alert('Admin Password mismatch! Please confirm the new Admin password correctly.');
+                    hasError = true;
+                } else {
+                    updates.admin = newAdmin;
+                }
+            }
             
-            await update(passwordsRef, updates);
-            alert('Passwords updated successfully!');
-            closeModal('passwordManagementModal');
-            document.getElementById('newAdminPassword').value = '';
-            document.getElementById('newSupervisorPassword').value = '';
+            // Check Supervisor Password for mismatch
+            if (newSupervisor) {
+                if (newSupervisor !== confirmSupervisor) {
+                    alert('Supervisor Password mismatch! Please confirm the new Supervisor password correctly.');
+                    hasError = true;
+                } else {
+                    updates.supervisor = newSupervisor;
+                }
+            }
+            
+            if (hasError) {
+                return; // Stop the process if any mismatch occurred
+            }
+
+            if (Object.keys(updates).length > 0) {
+                await update(passwordsRef, updates);
+                alert('Passwords updated successfully!');
+                closeModal('passwordManagementModal');
+                
+                // Clear all four fields on success
+                document.getElementById('newAdminPassword').value = '';
+                document.getElementById('confirmAdminPassword').value = ''; // ADDED: Clear confirmation field
+                document.getElementById('newSupervisorPassword').value = '';
+                document.getElementById('confirmSupervisorPassword').value = ''; // ADDED: Clear confirmation field
+            }
         }
 
         // Report functions
@@ -1592,6 +1613,7 @@
             closeModal('passwordModal');
             currentRequestKey = null; // Ensure key is cleared on cancel
             document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').type = 'password'; // Ensure it resets to password type
         });
         document.getElementById('submitPasswordBtn').addEventListener('click', verifyPassword);
         
